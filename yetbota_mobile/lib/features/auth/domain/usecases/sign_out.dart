@@ -1,0 +1,10 @@
+import 'package:yetbota_mobile/core/types/result.dart';
+import 'package:yetbota_mobile/features/auth/domain/repositories/auth_repository.dart';
+
+class SignOut {
+  const SignOut(this._repo);
+  final AuthRepository _repo;
+
+  Future<Result<void>> call() => _repo.signOut();
+}
+
