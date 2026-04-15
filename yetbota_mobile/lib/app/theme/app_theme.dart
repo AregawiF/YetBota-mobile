@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const primary = Color(0xFF22C55E);
@@ -12,7 +13,7 @@ class AppTheme {
       surface: lightBackground,
     );
 
-    return ThemeData(
+    final theme = ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: lightBackground,
@@ -23,6 +24,11 @@ class AppTheme {
       ),
       inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
     );
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(theme.textTheme);
+    return theme.copyWith(
+      textTheme: textTheme,
+      primaryTextTheme: GoogleFonts.plusJakartaSansTextTheme(theme.primaryTextTheme),
+    );
   }
 
   static ThemeData dark() {
@@ -32,7 +38,7 @@ class AppTheme {
       surface: darkBackground,
     );
 
-    return ThemeData(
+    final theme = ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: darkBackground,
@@ -42,6 +48,11 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
       ),
       inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
+    );
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(theme.textTheme);
+    return theme.copyWith(
+      textTheme: textTheme,
+      primaryTextTheme: GoogleFonts.plusJakartaSansTextTheme(theme.primaryTextTheme),
     );
   }
 }

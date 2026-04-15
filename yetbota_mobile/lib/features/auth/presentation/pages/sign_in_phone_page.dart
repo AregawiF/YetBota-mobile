@@ -59,32 +59,14 @@ class _SignInPhonePageState extends State<SignInPhonePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 36),
                     Center(
-                      child: Container(
-                        height: 96,
-                        width: 96,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primary,
-                          borderRadius: BorderRadius.circular(22),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primary.withOpacity(0.22),
-                              blurRadius: 40,
-                              offset: const Offset(0, 16),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
-                          child: Image.asset(
-                            'assets/yetbota-logo-v1.jpg',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                      child: Image.asset(
+                        'assets/icons/discover_icon.png',
+                        width: 160,
+                        height: 160,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 24),
                     Text(
                       'Yet Bota',
                       textAlign: TextAlign.center,

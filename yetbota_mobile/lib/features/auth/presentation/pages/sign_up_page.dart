@@ -53,7 +53,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       children: [
                         const SizedBox(height: 8),
                         const _IconMark(),
-                        const SizedBox(height: 20),
                         Text(
                           'Join Yet Bota.',
                           textAlign: TextAlign.center,
@@ -323,27 +322,11 @@ class _IconMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
-        height: 64,
-        width: 64,
-        decoration: BoxDecoration(
-          color: AppTheme.primary,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primary.withOpacity(0.4),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Image.asset(
-            'assets/yetbota-logo-v1.jpg',
-            fit: BoxFit.cover,
-          ),
-        ),
+      child: Image.asset(
+        'assets/icons/pin_icon.png',
+        width: 120,
+        height: 120,
+        fit: BoxFit.contain,
       ),
     );
   }
@@ -365,12 +348,6 @@ class _MapBackdrop extends StatelessWidget {
             0.2, 0.2, 0.2, 0, 0,
             0, 0, 0, 1, 0,
           ]),
-          child: const Image(
-            image: NetworkImage(
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuA7zINrRusqsP3CTtpRFpwF3TMBhzC2c69hObvO-uJHrpfCnIGNl_OhtzgZA7Cpghhpc2Dgzw9-eS81WwUtrSP36Z3ZxnkepB-301vseaNfYC4HC3FEy-XjHR4eVDOMoLvYxZWzV2eetlvYNEfCEUepenzuHjbTBwab0n_TXf4scFNi-LCksvPrlJOzvm3X5hTNla4qs_0k2KjbqsIH1fisSOZNrA-8mzyWY76MWRMNQhPDMjli29oGTiKpqtRzecVEhNt35N_X5jtE',
-            ),
-            fit: BoxFit.cover,
-          ),
         ),
       ),
     );

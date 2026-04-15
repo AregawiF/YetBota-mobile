@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
 import 'package:yetbota_mobile/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:yetbota_mobile/features/auth/presentation/pages/sign_up_page.dart';
@@ -13,40 +14,17 @@ class WelcomePage extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const _HeroBackgroundImage(),
-          const _HeroOverlay(),
+          const _WelcomeBackdrop(),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final bottomCardHeight = constraints.maxHeight * 0.58;
+                final bottomCardHeight = constraints.maxHeight * 0.55;
 
                 return Column(
                   children: [
                     Expanded(
                       child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _LogoBadge(),
-                            const SizedBox(height: 24),
-                            Text(
-                              'Yet Bota',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.white,
-                                letterSpacing: -0.5,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black.withOpacity(0.6),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: _TitleWithPin(isDark: isDark),
                       ),
                     ),
                     _BottomCard(height: bottomCardHeight),
@@ -61,97 +39,117 @@ class WelcomePage extends StatelessWidget {
   }
 }
 
-class _HeroBackgroundImage extends StatelessWidget {
-  const _HeroBackgroundImage();
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: NetworkImage(
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuBgl0uRpKGoNv_frWorIqtX_mkmQGLsN_KJ8Cg3cyzLSOglVzlgREsAdiEi7EbigSM4lrYkXxitvqqTfDsSHUFCpMSGWXkJ2DUMQ2AHal0mA_DBQm7_R6ZF1H-ySDNWL3y4JDKFLR34uVM7qpO-F8YECaiBlQbqTwNh1Z20w3YRaDOrlOBZ5rZTlcF0-Ztp0N3ysKX9KFSYTOJag4JKCqLm1MtGcTAIMZA8wuzXGfgDuKRGgIo5WVJTR0HNQMTWr07w5otxaYZ_rHzh',
-          ),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-}
+class _WelcomeBackdrop extends StatelessWidget {
+  const _WelcomeBackdrop();
 
-class _HeroOverlay extends StatelessWidget {
-  const _HeroOverlay();
+  static const _heroHeightFraction = 0.50;
+  static const _fadeToDark = Color(0xFF0D0D0D);
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const fadeTo = Color(0xFF0A0A0A);
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? [Colors.black.withOpacity(0.10), fadeTo]
-              : [Colors.black.withOpacity(0.35), fadeTo],
+    final heroHeight = MediaQuery.sizeOf(context).height * _heroHeightFraction;
+    final bottomFill = isDark ? _fadeToDark : AppTheme.lightBackground;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: heroHeight,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                'assets/welcome_background.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: isDark
+                        ? [
+                            Colors.black.withValues(alpha: 0.035),
+                            _fadeToDark,
+                          ]
+                        : [
+                            Colors.black.withValues(alpha: 0.08),
+                            Colors.transparent,
+                          ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+        Expanded(
+          child: ColoredBox(color: bottomFill),
+        ),
+      ],
     );
   }
 }
 
-class _LogoBadge extends StatelessWidget {
+class _TitleWithPin extends StatelessWidget {
+  const _TitleWithPin({required this.isDark});
+
+  final bool isDark;
+
   @override
   Widget build(BuildContext context) {
+    final pinAsset = isDark
+        ? 'assets/icons/location_pin_no_highlight.svg'
+        : 'assets/icons/location_pin.svg';
+
+    const pinW = 192.0;
+    const pinH = 182.0;
+    const highlightScale = 1.09;
+
+    final pin = SvgPicture.asset(
+      pinAsset,
+      height: pinH,
+      width: pinW,
+      fit: BoxFit.contain,
+    );
+
     return Stack(
       clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
       children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Colors.white.withOpacity(0.18)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.4),
-                blurRadius: 32,
-                offset: const Offset(0, 16),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: pinH),
+            Text(
+              'Yet Bota',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: -0.5,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.55 : 0.42),
+                    blurRadius: 14,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              'assets/yetbota-logo-v1.jpg',
-              height: 56,
-              width: 56,
-              fit: BoxFit.cover,
             ),
-          ),
+          ],
         ),
         Positioned(
-          right: -4,
-          bottom: -4,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.primary,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+          top: 40,
+          child: isDark
+              ? pin
+              : Transform.scale(
+                  scale: highlightScale,
+                  alignment: Alignment.center,
+                  child: pin,
                 ),
-              ],
-            ),
-            child: const Icon(
-              Icons.chat_bubble,
-              size: 18,
-              color: Color(0xFF0A0A0A),
-            ),
-          ),
         ),
       ],
     );
@@ -193,7 +191,7 @@ class _BottomCard extends StatelessWidget {
                   'Welcome',
                   style: textTheme.headlineSmall?.copyWith(
                     color: cs.onSurface,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -218,7 +216,7 @@ class _BottomCard extends StatelessWidget {
                       backgroundColor: AppTheme.primary,
                       foregroundColor: const Color(0xFF0A0A0A),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       shadowColor: AppTheme.primary.withOpacity(0.3),
                       elevation: 8,
@@ -243,10 +241,16 @@ class _BottomCard extends StatelessWidget {
                   width: double.infinity,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppTheme.primary, width: 2),
-                      foregroundColor: AppTheme.primary,
+                      side: BorderSide(
+                        color: isDark
+                            ? AppTheme.primary
+                            : const Color.fromRGBO(211, 242, 222, 1),
+                        width: 2,
+                      ),
+                      // backgroundColor: isDark ? Colors.transparent : Colors.white,
+                      foregroundColor: isDark ? AppTheme.primary : Colors.black,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     onPressed: () {
@@ -274,7 +278,7 @@ class _BottomCard extends StatelessWidget {
                   'YET BOTA © 2024',
                   style: TextStyle(
                     fontSize: 11,
-                    color: cs.onSurface.withOpacity(0.55),
+                    color: cs.onSurface.withOpacity(0.45),
                     letterSpacing: 2,
                     fontWeight: FontWeight.bold,
                   ),
