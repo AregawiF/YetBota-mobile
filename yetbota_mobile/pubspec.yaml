@@ -73,7 +73,6 @@ flutter:
     - assets/icons/location_pin_no_highlight.svg
     - assets/icons/location_no_highlight.jpg
     - assets/icons/discover_icon.png
-    - assets/icons/message_icon.svg
     - assets/icons/pin_icon.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg

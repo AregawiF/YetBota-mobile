@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/theme_cubit.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
+import 'package:yetbota_mobile/features/location_feed/presentation/pages/location_feed_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key, required this.token});
@@ -17,7 +18,8 @@ class HomePage extends StatelessWidget {
         title: const Text('Home'),
         actions: [
           TextButton(
-            onPressed: () => context.read<AuthBloc>().add(const AuthSignOutRequested()),
+            onPressed: () =>
+                context.read<AuthBloc>().add(const AuthSignOutRequested()),
             child: const Text('Sign out'),
           ),
         ],
@@ -37,7 +39,9 @@ class HomePage extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.wb_sunny_outlined),
                 title: const Text('Light'),
-                trailing: mode == ThemeMode.light ? const Icon(Icons.check) : null,
+                trailing: mode == ThemeMode.light
+                    ? const Icon(Icons.check)
+                    : null,
                 onTap: () {
                   context.read<ThemeCubit>().setMode(ThemeMode.light);
                   Navigator.of(context).pop();
@@ -46,7 +50,9 @@ class HomePage extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.nightlight_round),
                 title: const Text('Dark'),
-                trailing: mode == ThemeMode.dark ? const Icon(Icons.check) : null,
+                trailing: mode == ThemeMode.dark
+                    ? const Icon(Icons.check)
+                    : null,
                 onTap: () {
                   context.read<ThemeCubit>().setMode(ThemeMode.dark);
                   Navigator.of(context).pop();
@@ -55,7 +61,9 @@ class HomePage extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.settings_suggest_outlined),
                 title: const Text('System'),
-                trailing: mode == ThemeMode.system ? const Icon(Icons.check) : null,
+                trailing: mode == ThemeMode.system
+                    ? const Icon(Icons.check)
+                    : null,
                 onTap: () {
                   context.read<ThemeCubit>().setMode(ThemeMode.system);
                   Navigator.of(context).pop();
@@ -67,9 +75,28 @@ class HomePage extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Text('Token: $token'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Token: $token',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => LocationFeedPage(token: token),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.explore_outlined),
+              label: const Text('Open Location Feed'),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
