@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
 import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
+import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/community_qa_detail_page.dart';
 
 const _qaFilters = ['All', 'Housing', 'Safety', 'Nightlife'];
 
@@ -72,6 +73,8 @@ class CommunityQaPage extends StatelessWidget {
                               child: _QuestionCard(
                                 question: question,
                                 palette: palette,
+                                onTap: () =>
+                                    _openQuestionDetail(context, question),
                               ),
                             ),
                           ),
@@ -107,6 +110,23 @@ class CommunityQaPage extends StatelessWidget {
       SnackBar(
         content: Text('${item.name.toUpperCase()} is coming soon.'),
         duration: const Duration(milliseconds: 1100),
+      ),
+    );
+  }
+
+  void _openQuestionDetail(BuildContext context, _QaQuestion question) {
+    final relativeTime = question.meta.contains('•')
+        ? question.meta.split('•').last.trim()
+        : question.meta;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CommunityQaDetailPage(
+          questionTitle: question.title,
+          questionBody: question.body.replaceAll('...', '.'),
+          tagLabel: question.tag == null ? 'Parks & Rec' : question.tag!,
+          askedLabel: 'Asked $relativeTime',
+          questionImageUrl: question.imageUrl,
+        ),
       ),
     );
   }
@@ -247,188 +267,209 @@ class _FilterChips extends StatelessWidget {
 }
 
 class _QuestionCard extends StatelessWidget {
-  const _QuestionCard({required this.question, required this.palette});
+  const _QuestionCard({
+    required this.question,
+    required this.palette,
+    required this.onTap,
+  });
 
   final _QaQuestion question;
   final _QaPalette palette;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: palette.cardBackground,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: palette.cardBorder),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: palette.cardBackground,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: palette.cardBorder),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: NetworkImage(question.avatarUrl),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage: NetworkImage(question.avatarUrl),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          children: [
+                            Text(
+                              question.author,
+                              style: TextStyle(
+                                color: palette.primaryText,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            _ExpertBadge(
+                              label: question.badge,
+                              palette: palette,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
                         Text(
-                          question.author,
+                          question.meta,
                           style: TextStyle(
-                            color: palette.primaryText,
-                            fontSize: 14,
+                            color: palette.mutedText,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Transform.translate(
+                    offset: const Offset(0, -16),
+                    child: Icon(
+                      Icons.more_horiz,
+                      color: palette.mutedText,
+                      size: 28,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                question.title,
+                style: TextStyle(
+                  color: palette.primaryText,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                question.body,
+                style: TextStyle(
+                  color: palette.secondaryText,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+              if (question.imageUrl != null) ...[
+                const SizedBox(height: 14),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: AspectRatio(
+                    aspectRatio: 322 / 208,
+                    child: Image.network(question.imageUrl!, fit: BoxFit.cover),
+                  ),
+                ),
+              ],
+              if (question.tag != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: AppTheme.primary.withValues(alpha: 0.24),
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 13,
+                    vertical: 5,
+                  ),
+                  child: Text(
+                    question.tag!.toUpperCase(),
+                    style: const TextStyle(
+                      color: AppTheme.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              const Divider(height: 1, color: Color(0x1AFFFFFF)),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: palette.softSurface,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: palette.softBorder),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.arrow_upward,
+                          size: 18,
+                          color: palette.mutedText,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          question.upVotes,
+                          style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        _ExpertBadge(label: question.badge, palette: palette),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.arrow_downward,
+                          size: 18,
+                          color: palette.mutedText,
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      question.meta,
-                      style: TextStyle(
+                  ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.mode_comment_outlined,
+                        size: 18,
                         color: palette.mutedText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Transform.translate(
-                offset: const Offset(0, -16),
-                child: Icon(
-                  Icons.more_horiz,
-                  color: palette.mutedText,
-                  size: 28,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-            question.title,
-            style: TextStyle(
-              color: palette.primaryText,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            question.body,
-            style: TextStyle(
-              color: palette.secondaryText,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 1.4,
-            ),
-          ),
-          if (question.imageUrl != null) ...[
-            const SizedBox(height: 14),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: AspectRatio(
-                aspectRatio: 322 / 208,
-                child: Image.network(question.imageUrl!, fit: BoxFit.cover),
-              ),
-            ),
-          ],
-          if (question.tag != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: AppTheme.primary.withValues(alpha: 0.24),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
-              child: Text(
-                question.tag!.toUpperCase(),
-                style: const TextStyle(
-                  color: AppTheme.primary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 14),
-          const Divider(height: 1, color: Color(0x1AFFFFFF)),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: palette.softSurface,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: palette.softBorder),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.arrow_upward,
-                      size: 18,
-                      color: palette.mutedText,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      question.upVotes,
-                      style: const TextStyle(
-                        color: AppTheme.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                      const SizedBox(width: 6),
+                      Text(
+                        question.replies,
+                        style: TextStyle(
+                          color: palette.mutedText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.arrow_downward,
-                      size: 18,
-                      color: palette.mutedText,
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                children: [
-                  Icon(
-                    Icons.mode_comment_outlined,
-                    size: 18,
-                    color: palette.mutedText,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    question.replies,
-                    style: TextStyle(
-                      color: palette.mutedText,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Icon(
-                    Icons.share_outlined,
-                    size: 18,
-                    color: palette.mutedText,
+                      const SizedBox(width: 14),
+                      Icon(
+                        Icons.share_outlined,
+                        size: 18,
+                        color: palette.mutedText,
+                      ),
+                    ],
                   ),
                 ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
