@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
 import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
+import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/community_qa_page.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/widgets/discovery_comments_sheet.dart';
 
 class DiscoveryFeedPage extends StatefulWidget {
@@ -141,11 +142,14 @@ class _DiscoveryFeedPageState extends State<DiscoveryFeedPage> {
               ),
             ),
           ),
-          const Positioned(
+          Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: BottomNav(activeItem: BottomNavItem.feed),
+            child: BottomNav(
+              activeItem: BottomNavItem.feed,
+              onItemTapped: _handleBottomNavTap,
+            ),
           ),
         ],
       ),
@@ -202,6 +206,22 @@ class _DiscoveryFeedPageState extends State<DiscoveryFeedPage> {
           palette: palette,
         );
       },
+    );
+  }
+
+  void _handleBottomNavTap(BottomNavItem item) {
+    if (item == BottomNavItem.qna) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const CommunityQaPage()));
+      return;
+    }
+    if (item == BottomNavItem.feed) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${item.name.toUpperCase()} is coming soon.'),
+        duration: const Duration(milliseconds: 1100),
+      ),
     );
   }
 }

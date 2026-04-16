@@ -6,9 +6,16 @@ import 'package:yetbota_mobile/app/theme/app_theme.dart';
 enum BottomNavItem { feed, qna, assistant, profile }
 
 class BottomNav extends StatelessWidget {
-  const BottomNav({super.key, this.activeItem = BottomNavItem.feed});
+  const BottomNav({
+    super.key,
+    this.activeItem = BottomNavItem.feed,
+    this.onItemTapped,
+    this.onPrimaryActionTap,
+  });
 
   final BottomNavItem activeItem;
+  final ValueChanged<BottomNavItem>? onItemTapped;
+  final VoidCallback? onPrimaryActionTap;
 
   @override
   Widget build(BuildContext context) {
@@ -57,22 +64,30 @@ class BottomNav extends StatelessWidget {
                               icon: Icons.home_filled,
                               label: 'Feed',
                               active: activeItem == BottomNavItem.feed,
+                              onTap: () =>
+                                  onItemTapped?.call(BottomNavItem.feed),
                             ),
                             _NavItem(
                               icon: Icons.question_answer_outlined,
                               label: 'Q&A',
                               active: activeItem == BottomNavItem.qna,
+                              onTap: () =>
+                                  onItemTapped?.call(BottomNavItem.qna),
                             ),
                             const SizedBox(width: 72),
                             _NavItem(
                               icon: Icons.assistant_outlined,
                               label: 'Assistant',
                               active: activeItem == BottomNavItem.assistant,
+                              onTap: () =>
+                                  onItemTapped?.call(BottomNavItem.assistant),
                             ),
                             _NavItem(
                               icon: Icons.person_outline_rounded,
                               label: 'Profile',
                               active: activeItem == BottomNavItem.profile,
+                              onTap: () =>
+                                  onItemTapped?.call(BottomNavItem.profile),
                             ),
                           ],
                         ),
@@ -88,25 +103,29 @@ class BottomNav extends StatelessWidget {
             right: 0,
             top: 0,
             child: Center(
-              child: Container(
-                width: fabSize,
-                height: fabSize,
-                decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: fabBorder, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withValues(alpha: 0.38),
-                      blurRadius: 30,
-                      offset: const Offset(0, 8),
+              child: Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: onPrimaryActionTap,
+                  child: Container(
+                    width: fabSize,
+                    height: fabSize,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: fabBorder, width: 4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primary.withValues(alpha: 0.38),
+                          blurRadius: 30,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.add_rounded,
-                  color: fabIcon,
-                  size: 30,
+                    child: Icon(Icons.add_rounded, color: fabIcon, size: 30),
+                  ),
                 ),
               ),
             ),
@@ -122,11 +141,13 @@ class _NavItem extends StatelessWidget {
     required this.icon,
     required this.label,
     this.active = false,
+    this.onTap,
   });
 
   final IconData icon;
   final String label;
   final bool active;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -134,25 +155,32 @@ class _NavItem extends StatelessWidget {
     final color = active
         ? AppTheme.primary
         : (isDark ? const Color(0xFF64748B) : const Color(0xFF6B7280));
-    return SizedBox(
-      width: label == 'Assistant' ? 66 : 52,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 19, color: color),
-          const SizedBox(height: 4),
-          Text(
-            label.toUpperCase(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              letterSpacing: 1,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: SizedBox(
+          width: label == 'Assistant' ? 66 : 52,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 19, color: color),
+              const SizedBox(height: 4),
+              Text(
+                label.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  letterSpacing: 1,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

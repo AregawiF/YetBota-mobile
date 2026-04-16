@@ -7,6 +7,7 @@ import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
 import 'package:yetbota_mobile/app/theme/theme_cubit.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
+import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/community_qa_page.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/discovery_feed_page.dart';
 
 class LocationFeedPage extends StatelessWidget {
@@ -91,7 +92,15 @@ class LocationFeedPage extends StatelessWidget {
               ),
             ),
           ),
-          const Positioned(left: 0, right: 0, bottom: 0, child: BottomNav()),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: BottomNav(
+              activeItem: BottomNavItem.feed,
+              onItemTapped: (item) => _handleBottomNavTap(context, item),
+            ),
+          ),
         ],
       ),
     );
@@ -191,6 +200,22 @@ class LocationFeedPage extends StatelessWidget {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const DiscoveryFeedPage()));
+  }
+
+  void _handleBottomNavTap(BuildContext context, BottomNavItem item) {
+    if (item == BottomNavItem.qna) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const CommunityQaPage()));
+      return;
+    }
+    if (item == BottomNavItem.feed) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${item.name.toUpperCase()} is coming soon.'),
+        duration: const Duration(milliseconds: 1100),
+      ),
+    );
   }
 }
 
@@ -305,7 +330,11 @@ class _SearchBar extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 14),
         child: Row(
           children: [
-            Icon(Icons.search_rounded, color: palette.placeholderText, size: 18),
+            Icon(
+              Icons.search_rounded,
+              color: palette.placeholderText,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Text(
               'Search Ethiopian locations...',
@@ -600,11 +629,7 @@ class _PostActions extends StatelessWidget {
               value: post.comments,
             ),
             const SizedBox(width: 18),
-            Icon(
-              Icons.share_outlined,
-              color: palette.iconSecondary,
-              size: 20,
-            ),
+            Icon(Icons.share_outlined, color: palette.iconSecondary, size: 20),
           ],
         ),
         Icon(
