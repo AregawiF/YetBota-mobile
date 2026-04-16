@@ -3,9 +3,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
+import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
 import 'package:yetbota_mobile/app/theme/theme_cubit.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
+import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/discovery_feed_page.dart';
 
 class LocationFeedPage extends StatelessWidget {
   const LocationFeedPage({super.key, required this.token});
@@ -51,8 +53,9 @@ class LocationFeedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: palette.pageBackground,
       body: Stack(
         children: [
           Positioned.fill(
@@ -70,12 +73,15 @@ class LocationFeedPage extends StatelessWidget {
                         constraints: const BoxConstraints(maxWidth: 448),
                         child: ListView(
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
-                          children: const [
-                            _SearchBar(),
-                            SizedBox(height: 16),
-                            _FilterChips(),
-                            SizedBox(height: 24),
-                            _FeedList(posts: _posts),
+                          children: [
+                            const _SearchBar(),
+                            const SizedBox(height: 16),
+                            const _FilterChips(),
+                            const SizedBox(height: 24),
+                            _FeedList(
+                              posts: _posts,
+                              onPostTap: () => _openDiscoveryFeed(context),
+                            ),
                           ],
                         ),
                       ),
@@ -85,12 +91,7 @@ class LocationFeedPage extends StatelessWidget {
               ),
             ),
           ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _BottomNavBar(),
-          ),
+          const Positioned(left: 0, right: 0, bottom: 0, child: BottomNav()),
         ],
       ),
     );
@@ -98,12 +99,13 @@ class LocationFeedPage extends StatelessWidget {
 
   void _showProfileMenu(BuildContext context) {
     final mode = context.read<ThemeCubit>().state;
+    final palette = _LocationFeedPalette.of(context);
     final shortToken = token.length <= 14
         ? token
         : '${token.substring(0, 14)}...';
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: palette.sheetBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -117,19 +119,19 @@ class LocationFeedPage extends StatelessWidget {
                 height: 4,
                 width: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: palette.dragHandle,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
               const SizedBox(height: 14),
               ListTile(
-                title: const Text(
+                title: Text(
                   'Signed-in token',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: palette.primaryText),
                 ),
                 subtitle: Text(
                   shortToken,
-                  style: const TextStyle(color: Color(0xFF94A3B8)),
+                  style: TextStyle(color: palette.mutedText),
                 ),
                 leading: const Icon(
                   Icons.key_outlined,
@@ -168,9 +170,9 @@ class LocationFeedPage extends StatelessWidget {
                   Icons.logout_rounded,
                   color: Color(0xFFF87171),
                 ),
-                title: const Text(
+                title: Text(
                   'Sign out',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: palette.primaryText),
                 ),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
@@ -184,6 +186,12 @@ class LocationFeedPage extends StatelessWidget {
       },
     );
   }
+
+  void _openDiscoveryFeed(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const DiscoveryFeedPage()));
+  }
 }
 
 class _TopHeader extends StatelessWidget {
@@ -194,10 +202,11 @@ class _TopHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xCC000000),
-        border: Border(bottom: BorderSide(color: Color(0x0DFFFFFF))),
+      decoration: BoxDecoration(
+        color: palette.headerBackground,
+        border: Border(bottom: BorderSide(color: palette.headerBorder)),
       ),
       child: Center(
         child: ConstrainedBox(
@@ -218,10 +227,10 @@ class _TopHeader extends StatelessWidget {
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         'Discover',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: palette.primaryText,
                           fontSize: 20,
                           fontWeight: FontWeight.w500,
                           letterSpacing: -0.5,
@@ -235,9 +244,9 @@ class _TopHeader extends StatelessWidget {
                         children: [
                           IconButton(
                             onPressed: () {},
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.notifications_none_rounded,
-                              color: Color(0xFFCBD5E1),
+                              color: palette.iconSecondary,
                             ),
                           ),
                           const Positioned(
@@ -256,9 +265,9 @@ class _TopHeader extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: palette.avatarBackground,
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: const Color(0x1AFFFFFF)),
+                            border: Border.all(color: palette.headerBorder),
                           ),
                           clipBehavior: Clip.antiAlias,
                           child: _NetworkImageWithFallback(
@@ -284,22 +293,23 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return Container(
       height: 52,
       decoration: BoxDecoration(
-        color: const Color(0x0DFFFFFF),
+        color: palette.surfaceSoft,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0x1AFFFFFF)),
+        border: Border.all(color: palette.borderSoft),
       ),
-      child: const Padding(
+      child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 14),
         child: Row(
           children: [
-            Icon(Icons.search_rounded, color: Color(0xFF64748B), size: 18),
-            SizedBox(width: 10),
+            Icon(Icons.search_rounded, color: palette.placeholderText, size: 18),
+            const SizedBox(width: 10),
             Text(
               'Search Ethiopian locations...',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+              style: TextStyle(color: palette.placeholderText, fontSize: 14),
             ),
           ],
         ),
@@ -338,16 +348,17 @@ class _FilterChips extends StatelessWidget {
 }
 
 class _FeedList extends StatelessWidget {
-  const _FeedList({required this.posts});
+  const _FeedList({required this.posts, required this.onPostTap});
 
   final List<_PostData> posts;
+  final VoidCallback onPostTap;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         for (var i = 0; i < posts.length; i++) ...[
-          _PostCard(post: posts[i]),
+          _PostCard(post: posts[i], onTap: onPostTap),
           if (i != posts.length - 1) const SizedBox(height: 24),
         ],
       ],
@@ -356,44 +367,53 @@ class _FeedList extends StatelessWidget {
 }
 
 class _PostCard extends StatelessWidget {
-  const _PostCard({required this.post});
+  const _PostCard({required this.post, required this.onTap});
 
   final _PostData post;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF242926),
+    final palette = _LocationFeedPalette.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x0DFFFFFF)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _PostHeader(post: post),
-            const SizedBox(height: 16),
-            _PostImage(post: post),
-            const SizedBox(height: 14),
-            _PostActions(post: post),
-            const SizedBox(height: 12),
-            Text(
-              post.body,
-              style: const TextStyle(
-                color: Color(0xFFCBD5E1),
-                fontSize: 14,
-                height: 1.6,
-              ),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: palette.cardBackground,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: palette.borderSoft),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _PostHeader(post: post),
+                const SizedBox(height: 16),
+                _PostImage(post: post),
+                const SizedBox(height: 14),
+                _PostActions(post: post),
+                const SizedBox(height: 12),
+                Text(
+                  post.body,
+                  style: TextStyle(
+                    color: palette.bodyText,
+                    fontSize: 14,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [for (final tag in post.tags) _TagChip(tag: tag)],
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [for (final tag in post.tags) _TagChip(tag: tag)],
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -407,6 +427,7 @@ class _PostHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -417,7 +438,7 @@ class _PostHeader extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: const Color(0x1AFFFFFF)),
+                border: Border.all(color: palette.borderSoft),
               ),
               clipBehavior: Clip.antiAlias,
               child: _NetworkImageWithFallback(
@@ -431,8 +452,8 @@ class _PostHeader extends StatelessWidget {
               children: [
                 Text(
                   post.author,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: palette.primaryText,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -464,7 +485,7 @@ class _PostHeader extends StatelessWidget {
         IconButton(
           onPressed: () {},
           visualDensity: VisualDensity.compact,
-          icon: const Icon(Icons.more_horiz_rounded, color: Color(0xFF94A3B8)),
+          icon: Icon(Icons.more_horiz_rounded, color: palette.iconSecondary),
         ),
       ],
     );
@@ -478,6 +499,7 @@ class _PostImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: AspectRatio(
@@ -521,26 +543,26 @@ class _PostImage extends StatelessWidget {
                   filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0x99000000),
+                      color: palette.overlayPillBackground,
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0x33FFFFFF)),
+                      border: Border.all(color: palette.overlayPillBorder),
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 8,
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.map_outlined,
                           color: AppTheme.primary,
                           size: 14,
                         ),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         Text(
                           'Show on Map',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: palette.primaryText,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -565,6 +587,7 @@ class _PostActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -577,117 +600,19 @@ class _PostActions extends StatelessWidget {
               value: post.comments,
             ),
             const SizedBox(width: 18),
-            const Icon(
+            Icon(
               Icons.share_outlined,
-              color: Color(0xFF94A3B8),
+              color: palette.iconSecondary,
               size: 20,
             ),
           ],
         ),
-        const Icon(
+        Icon(
           Icons.bookmark_border_rounded,
-          color: Color(0xFF94A3B8),
+          color: palette.iconSecondary,
           size: 20,
         ),
       ],
-    );
-  }
-}
-
-class _BottomNavBar extends StatelessWidget {
-  const _BottomNavBar();
-
-  @override
-  Widget build(BuildContext context) {
-    const fabSize = 56.0;
-    const fabRadius = fabSize / 2;
-    const navTopInset = fabRadius;
-    const navBodyHeight = 64.0;
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-    return SizedBox(
-      height: navTopInset + navBodyHeight + bottomInset,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 0,
-            right: 0,
-            top: navTopInset,
-            bottom: 0,
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xF2000000),
-                    border: Border(top: BorderSide(color: Color(0x1AFFFFFF))),
-                  ),
-                  padding: EdgeInsets.only(bottom: bottomInset + 2),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 448),
-                      child: const Padding(
-                        padding: EdgeInsets.fromLTRB(14, 8, 14, 6),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _NavItem(
-                              icon: Icons.home_filled,
-                              label: 'Feed',
-                              active: true,
-                            ),
-                            _NavItem(
-                              icon: Icons.question_answer_outlined,
-                              label: 'Q&A',
-                            ),
-                            SizedBox(width: 72),
-                            _NavItem(
-                              icon: Icons.assistant_outlined,
-                              label: 'AI Assistant',
-                            ),
-                            _NavItem(
-                              icon: Icons.person_outline_rounded,
-                              label: 'Profile',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            child: Center(
-              child: Container(
-                width: fabSize,
-                height: fabSize,
-                decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withValues(alpha: 0.38),
-                      blurRadius: 30,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: Colors.black,
-                  size: 30,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -700,29 +625,30 @@ class _NetworkImageWithFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return Image.network(
       imageUrl,
       fit: fit,
       errorBuilder: (context, error, stackTrace) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+              colors: palette.fallbackGradient,
             ),
           ),
-          child: const Center(
+          child: Center(
             child: Icon(
               Icons.image_not_supported_outlined,
-              color: Color(0xFF94A3B8),
+              color: palette.iconSecondary,
             ),
           ),
         );
       },
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
-        return const ColoredBox(color: Color(0xFF111827));
+        return ColoredBox(color: palette.loadingFallback);
       },
     );
   }
@@ -741,12 +667,13 @@ class _PillChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
       decoration: BoxDecoration(
-        color: selected ? AppTheme.primary : const Color(0x0DFFFFFF),
+        color: selected ? AppTheme.primary : palette.surfaceSoft,
         borderRadius: BorderRadius.circular(999),
-        border: selected ? null : Border.all(color: const Color(0x1AFFFFFF)),
+        border: selected ? null : Border.all(color: palette.borderSoft),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -754,13 +681,13 @@ class _PillChip extends StatelessWidget {
           Icon(
             icon,
             size: 12,
-            color: selected ? Colors.black : const Color(0xFFCBD5E1),
+            color: selected ? Colors.black : palette.bodyText,
           ),
           const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
-              color: selected ? Colors.black : const Color(0xFFCBD5E1),
+              color: selected ? Colors.black : palette.bodyText,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
               fontSize: 12,
             ),
@@ -778,12 +705,13 @@ class _TagChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0x33000000),
+        color: palette.tagBackground,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0x0DFFFFFF)),
+        border: Border.all(color: palette.borderSoft),
       ),
       child: Text(
         tag,
@@ -805,56 +733,20 @@ class _Counter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return Row(
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+        Icon(icon, size: 18, color: palette.iconSecondary),
         const SizedBox(width: 6),
         Text(
           value,
-          style: const TextStyle(
-            color: Color(0xFF94A3B8),
+          style: TextStyle(
+            color: palette.iconSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
         ),
       ],
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? AppTheme.primary : const Color(0xFF64748B);
-    return SizedBox(
-      width: label == 'AI Assistant' ? 66 : 52,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 19, color: color),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -874,14 +766,106 @@ class _ThemeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _LocationFeedPalette.of(context);
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFFCBD5E1)),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
+      leading: Icon(icon, color: palette.iconSecondary),
+      title: Text(title, style: TextStyle(color: palette.primaryText)),
       trailing: selected
           ? const Icon(Icons.check, color: AppTheme.primary)
           : null,
       onTap: onTap,
     );
+  }
+}
+
+class _LocationFeedPalette {
+  const _LocationFeedPalette({
+    required this.pageBackground,
+    required this.cardBackground,
+    required this.headerBackground,
+    required this.headerBorder,
+    required this.surfaceSoft,
+    required this.borderSoft,
+    required this.primaryText,
+    required this.bodyText,
+    required this.mutedText,
+    required this.iconSecondary,
+    required this.placeholderText,
+    required this.avatarBackground,
+    required this.tagBackground,
+    required this.overlayPillBackground,
+    required this.overlayPillBorder,
+    required this.loadingFallback,
+    required this.fallbackGradient,
+    required this.sheetBackground,
+    required this.dragHandle,
+  });
+
+  final Color pageBackground;
+  final Color cardBackground;
+  final Color headerBackground;
+  final Color headerBorder;
+  final Color surfaceSoft;
+  final Color borderSoft;
+  final Color primaryText;
+  final Color bodyText;
+  final Color mutedText;
+  final Color iconSecondary;
+  final Color placeholderText;
+  final Color avatarBackground;
+  final Color tagBackground;
+  final Color overlayPillBackground;
+  final Color overlayPillBorder;
+  final Color loadingFallback;
+  final List<Color> fallbackGradient;
+  final Color sheetBackground;
+  final Color dragHandle;
+
+  static _LocationFeedPalette of(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark
+        ? const _LocationFeedPalette(
+            pageBackground: AppTheme.darkBackground,
+            cardBackground: Color(0xFF242926),
+            headerBackground: Color(0xCC000000),
+            headerBorder: Color(0x0DFFFFFF),
+            surfaceSoft: Color(0x0DFFFFFF),
+            borderSoft: Color(0x1AFFFFFF),
+            primaryText: Colors.white,
+            bodyText: Color(0xFFCBD5E1),
+            mutedText: Color(0xFF94A3B8),
+            iconSecondary: Color(0xFF94A3B8),
+            placeholderText: Color(0xFF64748B),
+            avatarBackground: Color(0xFF1E293B),
+            tagBackground: Color(0x33000000),
+            overlayPillBackground: Color(0x99000000),
+            overlayPillBorder: Color(0x33FFFFFF),
+            loadingFallback: Color(0xFF111827),
+            fallbackGradient: [Color(0xFF1E293B), Color(0xFF0F172A)],
+            sheetBackground: Color(0xFF121212),
+            dragHandle: Colors.white24,
+          )
+        : const _LocationFeedPalette(
+            pageBackground: Color(0xFFF8FAFC),
+            cardBackground: Colors.white,
+            headerBackground: Color(0xF2FFFFFF),
+            headerBorder: Color(0x14000000),
+            surfaceSoft: Color(0xFFF1F5F9),
+            borderSoft: Color(0x14000000),
+            primaryText: Color(0xFF0F172A),
+            bodyText: Color(0xFF334155),
+            mutedText: Color(0xFF64748B),
+            iconSecondary: Color(0xFF64748B),
+            placeholderText: Color(0xFF64748B),
+            avatarBackground: Color(0xFFE2E8F0),
+            tagBackground: Color(0x0A0F172A),
+            overlayPillBackground: Color(0xE6FFFFFF),
+            overlayPillBorder: Color(0x14000000),
+            loadingFallback: Color(0xFFE2E8F0),
+            fallbackGradient: [Color(0xFFE2E8F0), Color(0xFFCBD5E1)],
+            sheetBackground: Color(0xFFFFFFFF),
+            dragHandle: Color(0x33000000),
+          );
   }
 }
 
