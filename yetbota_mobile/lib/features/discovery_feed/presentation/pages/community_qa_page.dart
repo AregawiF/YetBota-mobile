@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
 import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
+import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/ask_question_page.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/community_qa_detail_page.dart';
 
 const _qaFilters = ['All', 'Housing', 'Safety', 'Nightlife'];
@@ -55,7 +56,10 @@ class CommunityQaPage extends StatelessWidget {
             bottom: false,
             child: Column(
               children: [
-                _Header(palette: palette),
+                _Header(
+                  palette: palette,
+                  onPostTap: () => _openAskQuestion(context),
+                ),
                 Expanded(
                   child: Center(
                     child: ConstrainedBox(
@@ -130,12 +134,19 @@ class CommunityQaPage extends StatelessWidget {
       ),
     );
   }
+
+  void _openAskQuestion(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AskQuestionPage()),
+    );
+  }
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.palette});
+  const _Header({required this.palette, required this.onPostTap});
 
   final _QaPalette palette;
+  final VoidCallback onPostTap;
 
   @override
   Widget build(BuildContext context) {
@@ -173,18 +184,48 @@ class _Header extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: palette.softSurface,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.notifications_none_rounded,
-                      color: palette.iconColor,
-                      size: 20,
-                    ),
+                  Row(
+                    children: [
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: onPostTap,
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'Post',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: palette.softSurface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.notifications_none_rounded,
+                          color: palette.iconColor,
+                          size: 20,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
