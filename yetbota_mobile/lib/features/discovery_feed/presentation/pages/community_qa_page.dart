@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
-import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/ask_question_page.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/community_qa_detail_page.dart';
 
@@ -50,70 +49,43 @@ class CommunityQaPage extends StatelessWidget {
     final palette = _QaPalette.of(context);
     return Scaffold(
       backgroundColor: palette.pageBackground,
-      body: Stack(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                _Header(
-                  palette: palette,
-                  onPostTap: () => _openAskQuestion(context),
-                ),
-                Expanded(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 448),
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
-                        children: [
-                          _SearchBar(palette: palette),
-                          const SizedBox(height: 16),
-                          _FilterChips(palette: palette),
-                          const SizedBox(height: 24),
-                          ..._questions.map(
-                            (question) => Padding(
-                              padding: const EdgeInsets.only(bottom: 20),
-                              child: _QuestionCard(
-                                question: question,
-                                palette: palette,
-                                onTap: () =>
-                                    _openQuestionDetail(context, question),
-                              ),
-                            ),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _Header(
+              palette: palette,
+              onPostTap: () => _openAskQuestion(context),
+            ),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 448),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
+                    children: [
+                      _SearchBar(palette: palette),
+                      const SizedBox(height: 16),
+                      _FilterChips(palette: palette),
+                      const SizedBox(height: 24),
+                      ..._questions.map(
+                        (question) => Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: _QuestionCard(
+                            question: question,
+                            palette: palette,
+                            onTap: () =>
+                                _openQuestionDetail(context, question),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNav(
-              activeItem: BottomNavItem.qna,
-              onItemTapped: (item) => _handleNavTap(context, item),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _handleNavTap(BuildContext context, BottomNavItem item) {
-    if (item == BottomNavItem.qna) return;
-    if (item == BottomNavItem.feed) {
-      Navigator.of(context).maybePop();
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${item.name.toUpperCase()} is coming soon.'),
-        duration: const Duration(milliseconds: 1100),
+          ],
+        ),
       ),
     );
   }

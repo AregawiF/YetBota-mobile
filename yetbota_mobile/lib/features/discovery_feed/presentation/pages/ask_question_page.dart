@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
-import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
 
 class AskQuestionPage extends StatefulWidget {
   const AskQuestionPage({super.key});
@@ -32,84 +31,62 @@ class _AskQuestionPageState extends State<AskQuestionPage> {
     final palette = _AskQuestionPalette.of(context);
     return Scaffold(
       backgroundColor: palette.pageBackground,
-      body: Stack(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                _AskQuestionHeader(
-                  palette: palette,
-                  hasQuestion: _questionController.text.trim().isNotEmpty,
-                  onClose: () => Navigator.of(context).maybePop(),
-                  onPost: _handlePost,
-                ),
-                Expanded(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 448),
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 166),
-                        children: [
-                          _GuidelinesCard(palette: palette),
-                          const SizedBox(height: 20),
-                          _SectionLabel(text: 'YOUR QUESTION', palette: palette),
-                          const SizedBox(height: 10),
-                          _QuestionInput(
-                            palette: palette,
-                            controller: _questionController,
-                            onChanged: (_) => setState(() {}),
-                          ),
-                          const SizedBox(height: 22),
-                          _SectionLabel(
-                            text: 'REFERENCE LOCATION',
-                            palette: palette,
-                          ),
-                          const SizedBox(height: 10),
-                          _ReferenceLocationButton(palette: palette),
-                          const SizedBox(height: 24),
-                          _SectionLabel(text: 'ADD TAGS', palette: palette),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: _availableTags.map((tag) {
-                              final selected = _selectedTags.contains(tag);
-                              return _TagChip(
-                                tag: tag,
-                                selected: selected,
-                                palette: palette,
-                                onTap: () => _toggleTag(tag),
-                              );
-                            }).toList(),
-                          ),
-                        ],
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _AskQuestionHeader(
+              palette: palette,
+              hasQuestion: _questionController.text.trim().isNotEmpty,
+              onClose: () => Navigator.of(context).maybePop(),
+              onPost: _handlePost,
+            ),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 448),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
+                    children: [
+                      _GuidelinesCard(palette: palette),
+                      const SizedBox(height: 20),
+                      _SectionLabel(text: 'YOUR QUESTION', palette: palette),
+                      const SizedBox(height: 10),
+                      _QuestionInput(
+                        palette: palette,
+                        controller: _questionController,
+                        onChanged: (_) => setState(() {}),
                       ),
-                    ),
+                      const SizedBox(height: 22),
+                      _SectionLabel(
+                        text: 'REFERENCE LOCATION',
+                        palette: palette,
+                      ),
+                      const SizedBox(height: 10),
+                      _ReferenceLocationButton(palette: palette),
+                      const SizedBox(height: 24),
+                      _SectionLabel(text: 'ADD TAGS', palette: palette),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: _availableTags.map((tag) {
+                          final selected = _selectedTags.contains(tag);
+                          return _TagChip(
+                            tag: tag,
+                            selected: selected,
+                            palette: palette,
+                            onTap: () => _toggleTag(tag),
+                          );
+                        }).toList(),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNav(
-              activeItem: BottomNavItem.qna,
-              onPrimaryActionTap: () {},
-              onItemTapped: (item) {
-                if (item == BottomNavItem.qna) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${item.name.toUpperCase()} is coming soon.'),
-                    duration: const Duration(milliseconds: 1100),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

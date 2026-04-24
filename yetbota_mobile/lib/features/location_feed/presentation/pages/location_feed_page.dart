@@ -3,11 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
-import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
 import 'package:yetbota_mobile/app/theme/theme_cubit.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
-import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/community_qa_page.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/discovery_feed_page.dart';
 
 class LocationFeedPage extends StatelessWidget {
@@ -57,51 +55,36 @@ class LocationFeedPage extends StatelessWidget {
     final palette = _LocationFeedPalette.of(context);
     return Scaffold(
       backgroundColor: palette.pageBackground,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  _TopHeader(
-                    profileImageUrl: _headerProfileImage,
-                    onProfileTap: () => _showProfileMenu(context),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 448),
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
-                          children: [
-                            const _SearchBar(),
-                            const SizedBox(height: 16),
-                            const _FilterChips(),
-                            const SizedBox(height: 24),
-                            _FeedList(
-                              posts: _posts,
-                              onPostTap: () => _openDiscoveryFeed(context),
-                            ),
-                          ],
-                        ),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _TopHeader(
+              profileImageUrl: _headerProfileImage,
+              onProfileTap: () => _showProfileMenu(context),
+            ),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 448),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
+                    children: [
+                      const _SearchBar(),
+                      const SizedBox(height: 16),
+                      const _FilterChips(),
+                      const SizedBox(height: 24),
+                      _FeedList(
+                        posts: _posts,
+                        onPostTap: () => _openDiscoveryFeed(context),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNav(
-              activeItem: BottomNavItem.feed,
-              onItemTapped: (item) => _handleBottomNavTap(context, item),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -200,22 +183,6 @@ class LocationFeedPage extends StatelessWidget {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const DiscoveryFeedPage()));
-  }
-
-  void _handleBottomNavTap(BuildContext context, BottomNavItem item) {
-    if (item == BottomNavItem.qna) {
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const CommunityQaPage()));
-      return;
-    }
-    if (item == BottomNavItem.feed) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${item.name.toUpperCase()} is coming soon.'),
-        duration: const Duration(milliseconds: 1100),
-      ),
-    );
   }
 }
 

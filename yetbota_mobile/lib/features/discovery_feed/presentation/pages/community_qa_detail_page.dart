@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
-import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
 
 class CommunityQaDetailPage extends StatelessWidget {
   const CommunityQaDetailPage({
@@ -33,225 +32,193 @@ class CommunityQaDetailPage extends StatelessWidget {
     final heroImage = questionImageUrl ?? _defaultQuestionImage;
     return Scaffold(
       backgroundColor: palette.pageBackground,
-      body: Stack(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                _TopBar(
-                  palette: palette,
-                  onBackTap: () => Navigator.of(context).pop(),
-                ),
-                Expanded(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 448),
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 190),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _TopBar(
+              palette: palette,
+              onBackTap: () => Navigator.of(context).pop(),
+            ),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 448),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 160),
+                    children: [
+                      _QuestionHero(imageUrl: heroImage, palette: palette),
+                      const SizedBox(height: 12),
+                      Row(
                         children: [
-                          _QuestionHero(imageUrl: heroImage, palette: palette),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primary.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                child: const Text(
-                                  'LOCAL INSIGHT',
-                                  style: TextStyle(
-                                    color: AppTheme.primary,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            child: const Text(
+                              'LOCAL INSIGHT',
+                              style: TextStyle(
+                                color: AppTheme.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
                               ),
-                              const SizedBox(width: 8),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            askedLabel,
+                            style: TextStyle(
+                              color: palette.metaText,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        questionTitle,
+                        style: TextStyle(
+                          color: palette.primaryText,
+                          fontSize: 24,
+                          height: 1.25,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        questionBody,
+                        style: TextStyle(
+                          color: palette.secondaryText,
+                          fontSize: 16,
+                          height: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: palette.softSurface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: palette.softBorder),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 13,
+                            vertical: 7,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.park_outlined,
+                                size: 12,
+                                color: palette.secondaryText,
+                              ),
+                              const SizedBox(width: 4),
                               Text(
-                                askedLabel,
+                                tagLabel,
                                 style: TextStyle(
-                                  color: palette.metaText,
+                                  color: palette.secondaryText,
                                   fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                          Text(
-                            questionTitle,
-                            style: TextStyle(
-                              color: palette.primaryText,
-                              fontSize: 24,
-                              height: 1.25,
-                              fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        decoration: BoxDecoration(
+                          border: Border.symmetric(
+                            horizontal: BorderSide(
+                              color: palette.sectionBorder,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            questionBody,
-                            style: TextStyle(
-                              color: palette.secondaryText,
-                              fontSize: 16,
-                              height: 1.6,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: palette.softSurface,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: palette.softBorder),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 13,
-                                vertical: 7,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.park_outlined,
-                                    size: 12,
-                                    color: palette.secondaryText,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    tagLabel,
-                                    style: TextStyle(
-                                      color: palette.secondaryText,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '24 COMMUNITY ANSWERS',
+                              style: TextStyle(
+                                color: palette.metaText,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.65,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            decoration: BoxDecoration(
-                              border: Border.symmetric(
-                                horizontal: BorderSide(
-                                  color: palette.sectionBorder,
-                                ),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Row(
                               children: [
-                                Text(
-                                  '24 COMMUNITY ANSWERS',
+                                const Text(
+                                  'Top Rated',
                                   style: TextStyle(
-                                    color: palette.metaText,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 1.65,
+                                    color: AppTheme.primary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Top Rated',
-                                      style: TextStyle(
-                                        color: AppTheme.primary,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      Icons.keyboard_arrow_down_rounded,
-                                      color: AppTheme.primary,
-                                      size: 16,
-                                    ),
-                                  ],
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: AppTheme.primary,
+                                  size: 16,
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          _AnswerCard(
-                            palette: palette,
-                            highlighted: true,
-                            score: '142',
-                            author: 'Alex Rivera',
-                            badge: 'Local Guide',
-                            timeAgo: '45m ago',
-                            avatarUrl: _topAnswerAvatar,
-                            body:
-                                "Check out Elizabeth Street Garden. It's exactly what you're looking for. Very hidden, lots of statues, and plenty of benches for reading.",
-                            replyLabel: 'Reply',
-                            nestedReply: const _NestedReplyData(
-                              score: '8',
-                              author: 'Sarah Chen',
-                              timeAgo: '30m ago',
-                              body:
-                                  'The cats there are so friendly too! Perfect reading companions.',
-                            ),
-                            showMoreComments: 'SHOW 4 MORE COMMENTS...',
-                          ),
-                          const SizedBox(height: 14),
-                          _AnswerCard(
-                            palette: palette,
-                            highlighted: true,
-                            score: '89',
-                            author: 'Sarah Chen',
-                            badge: 'Reading Enthusiast',
-                            timeAgo: '1h ago',
-                            avatarUrl: _secondAnswerAvatar,
-                            body:
-                                "There's a tiny pocket park on 2nd and Main. It has a beautiful waterfall wall that masks the city noise perfectly.",
-                            replyLabel: 'Reply',
-                          ),
-                          const SizedBox(height: 18),
-                          _YourAnswerComposer(palette: palette),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      _AnswerCard(
+                        palette: palette,
+                        highlighted: true,
+                        score: '142',
+                        author: 'Alex Rivera',
+                        badge: 'Local Guide',
+                        timeAgo: '45m ago',
+                        avatarUrl: _topAnswerAvatar,
+                        body:
+                            "Check out Elizabeth Street Garden. It's exactly what you're looking for. Very hidden, lots of statues, and plenty of benches for reading.",
+                        replyLabel: 'Reply',
+                        nestedReply: const _NestedReplyData(
+                          score: '8',
+                          author: 'Sarah Chen',
+                          timeAgo: '30m ago',
+                          body:
+                              'The cats there are so friendly too! Perfect reading companions.',
+                        ),
+                        showMoreComments: 'SHOW 4 MORE COMMENTS...',
+                      ),
+                      const SizedBox(height: 14),
+                      _AnswerCard(
+                        palette: palette,
+                        highlighted: true,
+                        score: '89',
+                        author: 'Sarah Chen',
+                        badge: 'Reading Enthusiast',
+                        timeAgo: '1h ago',
+                        avatarUrl: _secondAnswerAvatar,
+                        body:
+                            "There's a tiny pocket park on 2nd and Main. It has a beautiful waterfall wall that masks the city noise perfectly.",
+                        replyLabel: 'Reply',
+                      ),
+                      const SizedBox(height: 18),
+                      _YourAnswerComposer(palette: palette),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNav(
-              activeItem: BottomNavItem.qna,
-              onItemTapped: (item) => _handleNavTap(context, item),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _handleNavTap(BuildContext context, BottomNavItem item) {
-    if (item == BottomNavItem.qna) {
-      Navigator.of(context).pop();
-      return;
-    }
-    if (item == BottomNavItem.feed) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${item.name.toUpperCase()} is coming soon.'),
-        duration: const Duration(milliseconds: 1100),
+          ],
+        ),
       ),
     );
   }

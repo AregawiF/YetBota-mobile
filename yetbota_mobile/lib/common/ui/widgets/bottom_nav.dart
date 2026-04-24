@@ -11,11 +11,15 @@ class BottomNav extends StatelessWidget {
     this.activeItem = BottomNavItem.feed,
     this.onItemTapped,
     this.onPrimaryActionTap,
+    this.suppressActiveTab = false,
   });
 
   final BottomNavItem activeItem;
   final ValueChanged<BottomNavItem>? onItemTapped;
   final VoidCallback? onPrimaryActionTap;
+
+  /// When true, no tab uses the "active" highlight (e.g. create flows where only the center FAB is emphasized).
+  final bool suppressActiveTab;
 
   @override
   Widget build(BuildContext context) {
@@ -63,14 +67,16 @@ class BottomNav extends StatelessWidget {
                             _NavItem(
                               icon: Icons.home_filled,
                               label: 'Feed',
-                              active: activeItem == BottomNavItem.feed,
+                              active: !suppressActiveTab &&
+                                  activeItem == BottomNavItem.feed,
                               onTap: () =>
                                   onItemTapped?.call(BottomNavItem.feed),
                             ),
                             _NavItem(
                               icon: Icons.question_answer_outlined,
                               label: 'Q&A',
-                              active: activeItem == BottomNavItem.qna,
+                              active: !suppressActiveTab &&
+                                  activeItem == BottomNavItem.qna,
                               onTap: () =>
                                   onItemTapped?.call(BottomNavItem.qna),
                             ),
@@ -78,14 +84,16 @@ class BottomNav extends StatelessWidget {
                             _NavItem(
                               icon: Icons.assistant_outlined,
                               label: 'Assistant',
-                              active: activeItem == BottomNavItem.assistant,
+                              active: !suppressActiveTab &&
+                                  activeItem == BottomNavItem.assistant,
                               onTap: () =>
                                   onItemTapped?.call(BottomNavItem.assistant),
                             ),
                             _NavItem(
                               icon: Icons.person_outline_rounded,
                               label: 'Profile',
-                              active: activeItem == BottomNavItem.profile,
+                              active: !suppressActiveTab &&
+                                  activeItem == BottomNavItem.profile,
                               onTap: () =>
                                   onItemTapped?.call(BottomNavItem.profile),
                             ),

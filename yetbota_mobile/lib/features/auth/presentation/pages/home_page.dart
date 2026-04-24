@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/theme_cubit.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
+import 'package:yetbota_mobile/app/main_shell_page.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/discovery_feed_page.dart';
-import 'package:yetbota_mobile/features/location_feed/presentation/pages/location_feed_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key, required this.token});
@@ -88,7 +88,7 @@ class HomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => LocationFeedPage(token: token),
+                    builder: (_) => MainShellPage(token: token),
                   ),
                 );
               },
