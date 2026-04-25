@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
+import 'package:yetbota_mobile/common/ui/app_snack_bar.dart';
 
 class AskQuestionPage extends StatefulWidget {
   const AskQuestionPage({super.key});
@@ -93,19 +94,17 @@ class _AskQuestionPageState extends State<AskQuestionPage> {
 
   void _handlePost() {
     if (_questionController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Write your question first.'),
-          duration: Duration(milliseconds: 1100),
-        ),
+      showTopSnackBar(
+        context,
+        'Write your question first.',
+        duration: const Duration(milliseconds: 1100),
       );
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Question drafted. Connect to backend next.'),
-        duration: Duration(milliseconds: 1100),
-      ),
+    showTopSnackBar(
+      context,
+      'Question drafted. Connect to backend next.',
+      duration: const Duration(milliseconds: 1100),
     );
   }
 
@@ -218,9 +217,9 @@ class _GuidelinesCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(21),
       decoration: BoxDecoration(
-        color: const Color(0x0D22C55E),
+        color: AppTheme.primary500a0D,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xCC0F3A1D)),
+        border: Border.all(color: AppTheme.primary900aCC),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,7 +364,7 @@ class _ReferenceLocationButton extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: const BoxDecoration(
-              color: Color(0x1A22C55E),
+              color: AppTheme.primary500a1A,
               shape: BoxShape.circle,
             ),
             child: const Icon(

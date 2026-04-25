@@ -127,7 +127,7 @@ class LocationFeedPage extends StatelessWidget {
                 ),
                 leading: const Icon(
                   Icons.key_outlined,
-                  color: Color(0xFF22C55E),
+                  color: AppTheme.primary,
                 ),
               ),
               _ThemeTile(
@@ -517,7 +517,7 @@ class _PostImage extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xE622C55E),
+                    color: AppTheme.primary500aE6,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(

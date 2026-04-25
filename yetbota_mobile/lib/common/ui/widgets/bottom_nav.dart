@@ -6,6 +6,16 @@ import 'package:yetbota_mobile/app/theme/app_theme.dart';
 enum BottomNavItem { feed, qna, assistant, profile }
 
 class BottomNav extends StatelessWidget {
+  /// Total vertical space taken by the main shell bottom nav (FAB half-height + bar + safe area).
+  /// Use to pad modals / sheets so content stays above the nav.
+  static double mainShellHeight(BuildContext context) {
+    const double navTopInset = fabSize / 2;
+    return navTopInset + navBodyHeight + MediaQuery.paddingOf(context).bottom;
+  }
+
+  static const double fabSize = 56.0;
+  static const double navBodyHeight = 64.0;
+
   const BottomNav({
     super.key,
     this.activeItem = BottomNavItem.feed,
@@ -31,11 +41,9 @@ class BottomNav extends StatelessWidget {
         ? const Color(0x1AFFFFFF)
         : const Color(0x14000000);
     final fabBorder = isDark ? Colors.black : Colors.white;
-    final fabIcon = isDark ? Colors.black : const Color(0xFF064E3B);
-    const fabSize = 56.0;
+    final fabIcon = isDark ? Colors.black : AppTheme.primary800;
     const fabRadius = fabSize / 2;
     const navTopInset = fabRadius;
-    const navBodyHeight = 64.0;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return SizedBox(
       height: navTopInset + navBodyHeight + bottomInset,

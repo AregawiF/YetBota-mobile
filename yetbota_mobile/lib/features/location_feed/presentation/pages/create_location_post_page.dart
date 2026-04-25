@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
+import 'package:yetbota_mobile/common/ui/app_snack_bar.dart';
 
 class CreateLocationPostPage extends StatefulWidget {
   const CreateLocationPostPage({super.key});
@@ -58,13 +59,10 @@ class _CreateLocationPostPageState extends State<CreateLocationPostPage> {
                     _AddPhotosCard(
                       palette: p,
                       onUpload: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Image upload will connect to gallery next.',
-                            ),
-                            duration: Duration(milliseconds: 1200),
-                          ),
+                        showTopSnackBar(
+                          context,
+                          'Image upload will connect to gallery next.',
+                          duration: const Duration(milliseconds: 1200),
                         );
                       },
                       cameraUrl: _kCameraArt,
@@ -91,11 +89,10 @@ class _CreateLocationPostPageState extends State<CreateLocationPostPage> {
                       palette: p,
                       pinUrl: _kLocationPinArt,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Location picker coming soon.'),
-                            duration: Duration(milliseconds: 1200),
-                          ),
+                        showTopSnackBar(
+                          context,
+                          'Location picker coming soon.',
+                          duration: const Duration(milliseconds: 1200),
                         );
                       },
                     ),
@@ -130,11 +127,10 @@ class _CreateLocationPostPageState extends State<CreateLocationPostPage> {
                         });
                       },
                       onAddTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Custom tag: connect next.'),
-                            duration: Duration(milliseconds: 1200),
-                          ),
+                        showTopSnackBar(
+                          context,
+                          'Custom tag: connect next.',
+                          duration: const Duration(milliseconds: 1200),
                         );
                       },
                     ),
@@ -150,19 +146,17 @@ class _CreateLocationPostPageState extends State<CreateLocationPostPage> {
 
   void _handlePost() {
     if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Add a title for your post.'),
-          duration: Duration(milliseconds: 1100),
-        ),
+      showTopSnackBar(
+        context,
+        'Add a title for your post.',
+        duration: const Duration(milliseconds: 1100),
       );
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Post drafted. Connect to backend next.'),
-        duration: Duration(milliseconds: 1200),
-      ),
+    showTopSnackBar(
+      context,
+      'Post drafted. Connect to backend next.',
+      duration: const Duration(milliseconds: 1200),
     );
   }
 }
@@ -199,8 +193,8 @@ class _CreateLocationPostPalette {
         label: Color(0xFF94A3B8),
         hint: Color(0xFF475569),
         chip: Color(0xFFCBD5E1),
-        chipSelectedBg: Color(0x3322C55E),
-        chipSelectedBorder: Color(0x6622C55E),
+        chipSelectedBg: AppTheme.primary500a33,
+        chipSelectedBorder: AppTheme.primary500a66,
         addPhotosBorder: Color(0xFF222222),
         addPhotosFill: Color(0xFF121212),
       );
@@ -211,8 +205,8 @@ class _CreateLocationPostPalette {
       label: Color(0xFF64748B),
       hint: Color(0xFF94A3B8),
       chip: Color(0xFF475569),
-      chipSelectedBg: Color(0x3322C55E),
-      chipSelectedBorder: Color(0x6622C55E),
+      chipSelectedBg: AppTheme.primary500a33,
+      chipSelectedBorder: AppTheme.primary500a66,
       addPhotosBorder: Color(0xFFE2E8F0),
       addPhotosFill: Color(0xFFF1F5F9),
     );
