@@ -5,6 +5,7 @@ import 'package:yetbota_mobile/app/theme/app_theme.dart';
 import 'package:yetbota_mobile/common/ui/app_snack_bar.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/widgets/discovery_comments_sheet.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/widgets/discovery_qa_sheet.dart';
+import 'package:yetbota_mobile/features/show_on_map/presentation/show_on_map_overlay_page.dart';
 
 class DiscoveryFeedPage extends StatefulWidget {
   const DiscoveryFeedPage({super.key});
@@ -178,6 +179,7 @@ class _DiscoveryFeedPageState extends State<DiscoveryFeedPage> {
                         onDotTap: _goToSlide,
                         onCommentTap: _showCommentsSheet,
                         onMoreTap: _showPostOptionsMenu,
+                        onShowOnMap: _openShowOnMap,
                       );
                     },
                   ),
@@ -360,6 +362,16 @@ class _DiscoveryFeedPageState extends State<DiscoveryFeedPage> {
           ),
         ),
       ],
+    );
+  }
+
+  void _openShowOnMap() {
+    showShowOnMapSheet(
+      context,
+      data: const ShowOnMapViewData(
+        latitude: 12.0314,
+        longitude: 38.7483,
+      ),
     );
   }
 
@@ -609,6 +621,7 @@ class _BottomInfoOverlay extends StatelessWidget {
     required this.onDotTap,
     required this.onCommentTap,
     required this.onMoreTap,
+    required this.onShowOnMap,
   });
 
   final _DiscoveryPost post;
@@ -617,6 +630,7 @@ class _BottomInfoOverlay extends StatelessWidget {
   final ValueChanged<int> onDotTap;
   final VoidCallback onCommentTap;
   final void Function(BuildContext anchor) onMoreTap;
+  final VoidCallback onShowOnMap;
 
   @override
   Widget build(BuildContext context) {
@@ -748,38 +762,45 @@ class _BottomInfoOverlay extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 17,
-                            vertical: 9,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.glassBackground,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: palette.glassBorder),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.map_outlined,
-                                color: AppTheme.primary,
-                                size: 12,
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onShowOnMap,
+                        borderRadius: BorderRadius.circular(999),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 17,
+                                vertical: 9,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Show on Map',
-                                style: TextStyle(
-                                  color: palette.primaryText,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                              decoration: BoxDecoration(
+                                color: palette.glassBackground,
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: palette.glassBorder),
                               ),
-                            ],
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.map_outlined,
+                                    color: AppTheme.primary,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Show on Map',
+                                    style: TextStyle(
+                                      color: palette.primaryText,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
