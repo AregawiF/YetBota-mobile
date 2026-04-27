@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
+import 'package:yetbota_mobile/features/ai_assistant/presentation/pages/ai_assistant_chat_page.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/community_qa_page.dart';
 import 'package:yetbota_mobile/features/location_feed/presentation/pages/create_location_post_page.dart';
 import 'package:yetbota_mobile/features/location_feed/presentation/pages/location_feed_page.dart';
@@ -107,9 +108,9 @@ class _MainShellPageState extends State<MainShellPage> {
                       return <Route<dynamic>>[
                         MaterialPageRoute<void>(
                           settings: const RouteSettings(name: '/'),
-                          builder: (_) => const _ShellPlaceholderTab(
-                            title: 'Assistant',
-                            message: 'Assistant is coming soon.',
+                          builder: (_) => AiAssistantChatPage(
+                            onBackFromRoot: () =>
+                                _onTabTapped(BottomNavItem.feed),
                           ),
                         ),
                       ];
