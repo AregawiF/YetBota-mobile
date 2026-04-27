@@ -3,11 +3,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
-import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
 import 'package:yetbota_mobile/app/theme/theme_cubit.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/discovery_feed_page.dart';
+import 'package:yetbota_mobile/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:yetbota_mobile/features/show_on_map/presentation/show_on_map_overlay_page.dart';
 
 class LocationFeedPage extends StatelessWidget {
   const LocationFeedPage({super.key, required this.token});
@@ -56,43 +57,38 @@ class LocationFeedPage extends StatelessWidget {
     final palette = _LocationFeedPalette.of(context);
     return Scaffold(
       backgroundColor: palette.pageBackground,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  _TopHeader(
-                    profileImageUrl: _headerProfileImage,
-                    onProfileTap: () => _showProfileMenu(context),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 448),
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
-                          children: [
-                            const _SearchBar(),
-                            const SizedBox(height: 16),
-                            const _FilterChips(),
-                            const SizedBox(height: 24),
-                            _FeedList(
-                              posts: _posts,
-                              onPostTap: () => _openDiscoveryFeed(context),
-                            ),
-                          ],
-                        ),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _TopHeader(
+              profileImageUrl: _headerProfileImage,
+              onProfileTap: () => _showProfileMenu(context),
+              onNotificationTap: () => NotificationsPage.open(context),
+            ),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 448),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
+                    children: [
+                      const _SearchBar(),
+                      const SizedBox(height: 16),
+                      const _FilterChips(),
+                      const SizedBox(height: 24),
+                      _FeedList(
+                        posts: _posts,
+                        onPostTap: () => _openDiscoveryFeed(context),
+                        onShowOnMap: (post) => _openShowOnMap(context, post),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-          const Positioned(left: 0, right: 0, bottom: 0, child: BottomNav()),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -135,7 +131,7 @@ class LocationFeedPage extends StatelessWidget {
                 ),
                 leading: const Icon(
                   Icons.key_outlined,
-                  color: Color(0xFF22C55E),
+                  color: AppTheme.primary,
                 ),
               ),
               _ThemeTile(
@@ -192,13 +188,37 @@ class LocationFeedPage extends StatelessWidget {
       context,
     ).push(MaterialPageRoute(builder: (_) => const DiscoveryFeedPage()));
   }
+
+  void _openShowOnMap(BuildContext context, _PostData post) {
+    final (lat, lng) = _latLngForPost(post);
+    showShowOnMapSheet(
+      context,
+      data: ShowOnMapViewData(latitude: lat, longitude: lng),
+    );
+  }
+
+  (double, double) _latLngForPost(_PostData post) {
+    final loc = post.location.toUpperCase();
+    if (loc.contains('LALIBELA')) {
+      return (12.0314, 38.7483);
+    }
+    if (loc.contains('ADDIS') || loc.contains('UNITY')) {
+      return (8.9876, 38.7604);
+    }
+    return (9.032, 38.748);
+  }
 }
 
 class _TopHeader extends StatelessWidget {
-  const _TopHeader({required this.profileImageUrl, required this.onProfileTap});
+  const _TopHeader({
+    required this.profileImageUrl,
+    required this.onProfileTap,
+    required this.onNotificationTap,
+  });
 
   final String profileImageUrl;
   final VoidCallback onProfileTap;
+  final VoidCallback onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +263,7 @@ class _TopHeader extends StatelessWidget {
                       Stack(
                         children: [
                           IconButton(
-                            onPressed: () {},
+                            onPressed: onNotificationTap,
                             icon: Icon(
                               Icons.notifications_none_rounded,
                               color: palette.iconSecondary,
@@ -305,7 +325,11 @@ class _SearchBar extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 14),
         child: Row(
           children: [
-            Icon(Icons.search_rounded, color: palette.placeholderText, size: 18),
+            Icon(
+              Icons.search_rounded,
+              color: palette.placeholderText,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Text(
               'Search Ethiopian locations...',
@@ -348,17 +372,26 @@ class _FilterChips extends StatelessWidget {
 }
 
 class _FeedList extends StatelessWidget {
-  const _FeedList({required this.posts, required this.onPostTap});
+  const _FeedList({
+    required this.posts,
+    required this.onPostTap,
+    required this.onShowOnMap,
+  });
 
   final List<_PostData> posts;
   final VoidCallback onPostTap;
+  final void Function(_PostData post) onShowOnMap;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         for (var i = 0; i < posts.length; i++) ...[
-          _PostCard(post: posts[i], onTap: onPostTap),
+          _PostCard(
+            post: posts[i],
+            onTap: onPostTap,
+            onShowOnMap: () => onShowOnMap(posts[i]),
+          ),
           if (i != posts.length - 1) const SizedBox(height: 24),
         ],
       ],
@@ -367,10 +400,15 @@ class _FeedList extends StatelessWidget {
 }
 
 class _PostCard extends StatelessWidget {
-  const _PostCard({required this.post, required this.onTap});
+  const _PostCard({
+    required this.post,
+    required this.onTap,
+    required this.onShowOnMap,
+  });
 
   final _PostData post;
   final VoidCallback onTap;
+  final VoidCallback onShowOnMap;
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +431,7 @@ class _PostCard extends StatelessWidget {
               children: [
                 _PostHeader(post: post),
                 const SizedBox(height: 16),
-                _PostImage(post: post),
+                _PostImage(post: post, onShowOnMap: onShowOnMap),
                 const SizedBox(height: 14),
                 _PostActions(post: post),
                 const SizedBox(height: 12),
@@ -493,9 +531,10 @@ class _PostHeader extends StatelessWidget {
 }
 
 class _PostImage extends StatelessWidget {
-  const _PostImage({required this.post});
+  const _PostImage({required this.post, required this.onShowOnMap});
 
   final _PostData post;
+  final VoidCallback onShowOnMap;
 
   @override
   Widget build(BuildContext context) {
@@ -521,7 +560,7 @@ class _PostImage extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xE622C55E),
+                    color: AppTheme.primary500aE6,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
@@ -537,37 +576,45 @@ class _PostImage extends StatelessWidget {
             Positioned(
               right: 16,
               bottom: 16,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: palette.overlayPillBackground,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: palette.overlayPillBorder),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.map_outlined,
-                          color: AppTheme.primary,
-                          size: 14,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onShowOnMap,
+                  borderRadius: BorderRadius.circular(999),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: palette.overlayPillBackground,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: palette.overlayPillBorder),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Show on Map',
-                          style: TextStyle(
-                            color: palette.primaryText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.map_outlined,
+                              color: AppTheme.primary,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Show on Map',
+                              style: TextStyle(
+                                color: palette.primaryText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -600,11 +647,7 @@ class _PostActions extends StatelessWidget {
               value: post.comments,
             ),
             const SizedBox(width: 18),
-            Icon(
-              Icons.share_outlined,
-              color: palette.iconSecondary,
-              size: 20,
-            ),
+            Icon(Icons.share_outlined, color: palette.iconSecondary, size: 20),
           ],
         ),
         Icon(

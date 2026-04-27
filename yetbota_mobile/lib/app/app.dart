@@ -5,7 +5,7 @@ import 'package:yetbota_mobile/app/theme/theme_cubit.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_state.dart';
-import 'package:yetbota_mobile/features/location_feed/presentation/pages/location_feed_page.dart';
+import 'package:yetbota_mobile/app/main_shell_page.dart';
 import 'package:yetbota_mobile/features/welcome/presentation/pages/welcome_page.dart';
 
 class YetBotaApp extends StatelessWidget {
@@ -50,7 +50,7 @@ class _AuthGateState extends State<_AuthGate> {
           AuthUnknown() => const Scaffold(body: Center(child: CircularProgressIndicator())),
           AuthAuthenticating() =>
             const Scaffold(body: Center(child: CircularProgressIndicator())),
-          AuthAuthenticated(token: final token) => LocationFeedPage(token: token),
+          AuthAuthenticated(token: final token) => MainShellPage(token: token),
           AuthUnauthenticated() => const WelcomePage(),
         };
       },

@@ -2,7 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
-import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
+import 'package:yetbota_mobile/common/ui/app_snack_bar.dart';
+import 'package:yetbota_mobile/features/discovery_feed/presentation/widgets/discovery_comments_sheet.dart';
+import 'package:yetbota_mobile/features/discovery_feed/presentation/widgets/discovery_qa_sheet.dart';
+import 'package:yetbota_mobile/features/show_on_map/presentation/show_on_map_overlay_page.dart';
 
 class DiscoveryFeedPage extends StatefulWidget {
   const DiscoveryFeedPage({super.key});
@@ -43,6 +46,83 @@ class _DiscoveryFeedPageState extends State<DiscoveryFeedPage> {
       type: DiscoveryMediaType.video,
     ),
   ];
+  static const _commentAvatarMe =
+      'https://www.figma.com/api/mcp/asset/fb2e66bc-d2c5-43b2-afc1-a1ae68588cab';
+  static const _comments = [
+    DiscoveryCommentThread(
+      userName: 'Ababa Kebede',
+      timeAgo: '2h ago',
+      body:
+          'The way these were carved from a single rock is still mind-blowing. I was there last month and the energy is incredible!',
+      likes: 42,
+      avatarUrl:
+          'https://www.figma.com/api/mcp/asset/b00c6480-2b84-4e7c-a761-c2b9f6e49dba',
+      isTopGuide: true,
+      replies: [
+        DiscoveryCommentReply(
+          userName: 'Sara Tesfaye',
+          timeAgo: '1h ago',
+          body:
+              "Did you need a local guide to access the lower tunnels? I'm planning my visit for December.",
+          likes: 0,
+          avatarUrl:
+              'https://www.figma.com/api/mcp/asset/dc7eab4b-5f40-454f-9ff2-9d19d54624e3',
+        ),
+      ],
+      moreRepliesLabel: 'View 3 more replies...',
+    ),
+    DiscoveryCommentThread(
+      userName: 'Marcus Wright',
+      timeAgo: '5h ago',
+      body:
+          'Excellent cinematography @dawit_tekle. Captures the scale perfectly.',
+      likes: 18,
+      avatarUrl:
+          'https://www.figma.com/api/mcp/asset/4fb651d4-fefb-4506-b6db-d2bb321fee61',
+    ),
+  ];
+
+  static const _qaItems = <DiscoveryQaItem>[
+    DiscoveryQaItem(
+      userName: 'Marcus Rivers',
+      body:
+          'Is the trail to the upper falls still accessible after the recent rain, or is it too muddy for standard hiking boots?',
+      roleLabel: 'PATHFINDER',
+      roleIsPathfinder: true,
+      upCount: 12,
+      upActive: false,
+      avatarUrl:
+          'https://www.figma.com/api/mcp/asset/353d0f42-8cd0-4455-a24f-876b980e5eee',
+    ),
+    DiscoveryQaItem(
+      userName: 'Elena Zhang',
+      body:
+          'What time should I realistically arrive at the parking lot to catch the sunrise without it being completely full?',
+      roleLabel: 'PATHFINDER',
+      roleIsPathfinder: true,
+      upCount: 45,
+      upActive: true,
+      avatarUrl:
+          'https://www.figma.com/api/mcp/asset/ceeab77f-2148-4756-9827-23f52a14c6f4',
+    ),
+    DiscoveryQaItem(
+      userName: 'AdventureSeeker_92',
+      body:
+          'Are there any restrictions on flying drones near the viewing platform during the off-season?',
+      roleLabel: 'NEWCOMER',
+      roleIsPathfinder: false,
+      upCount: 2,
+      upActive: false,
+      dimmed: true,
+      showAvatarRing: false,
+      avatarIcon: Icon(
+        Icons.landscape_outlined,
+        color: Color(0xFF94A3B8),
+        size: 20,
+      ),
+    ),
+  ];
+
   static const _initialLoopPage = 4000;
 
   late final PageController _pageController;
@@ -88,29 +168,24 @@ class _DiscoveryFeedPageState extends State<DiscoveryFeedPage> {
                 children: [
                   const _TopHeader(),
                   const Spacer(),
-                  IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (context, child) {
-                        final activeIndex = _dotIndexFromController();
-                        return _BottomInfoOverlay(
-                          post: _post,
-                          activeIndex: activeIndex,
-                          totalSlides: _media.length,
-                          onDotTap: _goToSlide,
-                        );
-                      },
-                    ),
+                  AnimatedBuilder(
+                    animation: _pageController,
+                    builder: (context, child) {
+                      final activeIndex = _dotIndexFromController();
+                      return _BottomInfoOverlay(
+                        post: _post,
+                        activeIndex: activeIndex,
+                        totalSlides: _media.length,
+                        onDotTap: _goToSlide,
+                        onCommentTap: _showCommentsSheet,
+                        onMoreTap: _showPostOptionsMenu,
+                        onShowOnMap: _openShowOnMap,
+                      );
+                    },
                   ),
                 ],
               ),
             ),
-          ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNav(activeItem: BottomNavItem.feed),
           ),
         ],
       ),
@@ -151,6 +226,172 @@ class _DiscoveryFeedPageState extends State<DiscoveryFeedPage> {
     final activeIndex = _activeIndexFromController();
     return (_media.length - activeIndex) % _media.length;
   }
+
+  Future<void> _showCommentsSheet() async {
+    final palette = DiscoveryCommentsSheetPalette.fromTheme(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: palette.barrierColor,
+      builder: (sheetContext) {
+        return DiscoveryCommentsSheet(
+          commentCount: _post.comments,
+          currentUserAvatarUrl: _commentAvatarMe,
+          comments: _comments,
+          palette: palette,
+        );
+      },
+    );
+  }
+
+  void _showPostOptionsMenu(BuildContext anchorContext) {
+    final isDark = Theme.of(anchorContext).brightness == Brightness.dark;
+    final onSurface = isDark ? Colors.white : const Color(0xFF0F172A);
+    final overlay = Overlay.of(anchorContext).context.findRenderObject()! as RenderBox;
+    final box = anchorContext.findRenderObject()! as RenderBox;
+    final topLeft = box.localToGlobal(Offset.zero, ancestor: overlay);
+    final br = box.localToGlobal(
+      box.size.bottomRight(Offset.zero),
+      ancestor: overlay,
+    );
+    const menuW = 150.0;
+    const kItemH = 48.0;
+    const menuH = 3 * kItemH;
+    var left = br.dx - menuW;
+    if (left < 8) {
+      left = 8;
+    } else if (left + menuW > overlay.size.width - 8) {
+      left = overlay.size.width - menuW - 8;
+    }
+    var top = topLeft.dy - menuH - 6;
+    if (top < 8) {
+      top = br.dy + 6;
+    }
+
+    final position = RelativeRect.fromRect(
+      Rect.fromLTWH(left, top, menuW, menuH),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu<void>(
+      context: context,
+      position: position,
+      constraints: const BoxConstraints.tightFor(width: menuW),
+      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark
+              ? const Color(0x1AFFFFFF)
+              : const Color(0x14000000),
+        ),
+      ),
+      menuPadding: EdgeInsets.zero,
+      items: [
+        PopupMenuItem<void>(
+          height: kItemH,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          onTap: () {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              showTopSnackBar(context, 'Saved to your list.');
+            });
+          },
+          child: Row(
+            children: [
+              Icon(Icons.bookmark_outline_rounded, color: AppTheme.primary, size: 22),
+              const SizedBox(width: 12),
+              Text(
+                'Save',
+                style: TextStyle(
+                  color: onSurface,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<void>(
+          height: kItemH,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          onTap: () {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              _showQaSheet();
+            });
+          },
+          child: Row(
+            children: [
+              Icon(Icons.forum_outlined, color: AppTheme.primary, size: 22),
+              const SizedBox(width: 12),
+              Text(
+                'Q&A',
+                style: TextStyle(
+                  color: onSurface,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<void>(
+          height: kItemH,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          onTap: () {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              showTopSnackBar(context, 'Share coming soon.');
+            });
+          },
+          child: Row(
+            children: [
+              Icon(Icons.share_rounded, color: AppTheme.primary, size: 22),
+              const SizedBox(width: 12),
+              Text(
+                'Share',
+                style: TextStyle(
+                  color: onSurface,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openShowOnMap() {
+    showShowOnMapSheet(
+      context,
+      data: const ShowOnMapViewData(
+        latitude: 12.0314,
+        longitude: 38.7483,
+      ),
+    );
+  }
+
+  Future<void> _showQaSheet() async {
+    final palette = DiscoveryQaSheetPalette.fromTheme(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: palette.barrierColor,
+      builder: (sheetContext) {
+        return DiscoveryQaSheet(
+          questions: _qaItems,
+          currentUserAvatarUrl: _commentAvatarMe,
+          palette: palette,
+        );
+      },
+    );
+  }
+
 }
 
 class _TopHeader extends StatelessWidget {
@@ -169,7 +410,10 @@ class _TopHeader extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: palette.tabBarBackground,
                   borderRadius: BorderRadius.circular(999),
@@ -195,9 +439,7 @@ class _TopHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: palette.glassBackground,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: palette.glassBorder,
-                  ),
+                  border: Border.all(color: palette.glassBorder),
                 ),
                 child: Icon(
                   Icons.search_rounded,
@@ -254,11 +496,15 @@ class _RightActionRail extends StatelessWidget {
     required this.avatarUrl,
     required this.likes,
     required this.comments,
+    required this.onCommentTap,
+    required this.onMoreTap,
   });
 
   final String avatarUrl;
   final String likes;
   final String comments;
+  final VoidCallback onCommentTap;
+  final void Function(BuildContext anchor) onMoreTap;
 
   @override
   Widget build(BuildContext context) {
@@ -294,7 +540,11 @@ class _RightActionRail extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: palette.primaryBorder, width: 2),
                   ),
-                  child: Icon(Icons.add, color: palette.primaryBorder, size: 12),
+                  child: Icon(
+                    Icons.add,
+                    color: palette.primaryBorder,
+                    size: 12,
+                  ),
                 ),
               ),
             ),
@@ -308,36 +558,57 @@ class _RightActionRail extends StatelessWidget {
           label: 'Dislike',
         ),
         const SizedBox(height: 20),
-        _ActionCount(icon: Icons.mode_comment_outlined, label: comments),
+        _ActionCount(
+          icon: Icons.mode_comment_outlined,
+          label: comments,
+          onTap: onCommentTap,
+        ),
         const SizedBox(height: 20),
-        Icon(Icons.more_vert_rounded, color: palette.secondaryText),
+        Builder(
+          builder: (context) {
+            return GestureDetector(
+              onTap: () => onMoreTap(context),
+              behavior: HitTestBehavior.opaque,
+              child: Icon(
+                Icons.more_vert_rounded,
+                color: palette.secondaryText,
+                size: 34,
+              ),
+            );
+          },
+        ),
       ],
     );
   }
 }
 
 class _ActionCount extends StatelessWidget {
-  const _ActionCount({required this.icon, required this.label});
+  const _ActionCount({required this.icon, required this.label, this.onTap});
 
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final palette = _DiscoveryFeedPalette.of(context);
-    return Column(
-      children: [
-        Icon(icon, color: palette.primaryText, size: 34),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: palette.primaryText,
-            fontSize: 26 * 0.46,
-            fontWeight: FontWeight.w700,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Icon(icon, color: palette.primaryText, size: 34),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: palette.primaryText,
+              fontSize: 26 * 0.46,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -348,12 +619,18 @@ class _BottomInfoOverlay extends StatelessWidget {
     required this.activeIndex,
     required this.totalSlides,
     required this.onDotTap,
+    required this.onCommentTap,
+    required this.onMoreTap,
+    required this.onShowOnMap,
   });
 
   final _DiscoveryPost post;
   final int activeIndex;
   final int totalSlides;
   final ValueChanged<int> onDotTap;
+  final VoidCallback onCommentTap;
+  final void Function(BuildContext anchor) onMoreTap;
+  final VoidCallback onShowOnMap;
 
   @override
   Widget build(BuildContext context) {
@@ -407,7 +684,9 @@ class _BottomInfoOverlay extends StatelessWidget {
                             color: palette.bottomAccent.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(999),
                             border: Border.all(
-                              color: palette.bottomAccent.withValues(alpha: 0.32),
+                              color: palette.bottomAccent.withValues(
+                                alpha: 0.32,
+                              ),
                             ),
                           ),
                           child: Text(
@@ -446,9 +725,7 @@ class _BottomInfoOverlay extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: palette.glassBackground,
                                 borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: palette.glassBorder,
-                                ),
+                                border: Border.all(color: palette.glassBorder),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -485,40 +762,45 @@ class _BottomInfoOverlay extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 17,
-                            vertical: 9,
-                          ),
-                          decoration: BoxDecoration(
-                            color: palette.glassBackground,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: palette.glassBorder,
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onShowOnMap,
+                        borderRadius: BorderRadius.circular(999),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 17,
+                                vertical: 9,
+                              ),
+                              decoration: BoxDecoration(
+                                color: palette.glassBackground,
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: palette.glassBorder),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.map_outlined,
+                                    color: AppTheme.primary,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Show on Map',
+                                    style: TextStyle(
+                                      color: palette.primaryText,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.map_outlined,
-                                color: AppTheme.primary,
-                                size: 12,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Show on Map',
-                                style: TextStyle(
-                                  color: palette.primaryText,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ),
@@ -531,6 +813,8 @@ class _BottomInfoOverlay extends StatelessWidget {
                 avatarUrl: post.avatarUrl,
                 likes: post.likes,
                 comments: post.comments,
+                onCommentTap: onCommentTap,
+                onMoreTap: onMoreTap,
               ),
             ],
           ),
@@ -759,7 +1043,11 @@ class _DiscoveryFeedPalette {
             bodyText: Color(0xE6FFFFFF),
             glassBackground: Color(0x1AFFFFFF),
             glassBorder: Color(0x33FFFFFF),
-            bottomGradient: [Color(0x00000000), Color(0xCC000000), Color(0xFF000000)],
+            bottomGradient: [
+              Color(0x00000000),
+              Color(0xCC000000),
+              Color(0xFF000000),
+            ],
             inactiveDot: Color(0x4DFFFFFF),
             fallbackGradient: [Color(0xFF1E293B), Color(0xFF0F172A)],
             loadingFallback: Color(0xFF111827),
@@ -767,7 +1055,7 @@ class _DiscoveryFeedPalette {
             videoOverlayBorder: Color(0x59FFFFFF),
             mediaDimOverlay: Color(0x33000000),
             primaryBorder: Colors.black,
-            bottomAccent: Color(0xFF16A34A),
+            bottomAccent: AppTheme.primary600,
             tabBarBackground: Color(0x1F000000),
             tabBarBorder: Color(0x33FFFFFF),
             tabActiveText: Colors.white,
@@ -780,7 +1068,11 @@ class _DiscoveryFeedPalette {
             bodyText: Color(0xE6334155),
             glassBackground: Color(0xCCFFFFFF),
             glassBorder: Color(0x14000000),
-            bottomGradient: [Color(0x00FFFFFF), Color(0xD9FFFFFF), Color(0xF5FFFFFF)],
+            bottomGradient: [
+              Color(0x00FFFFFF),
+              Color(0xD9FFFFFF),
+              Color(0xF5FFFFFF),
+            ],
             inactiveDot: Color(0x4D334155),
             fallbackGradient: [Color(0xFFE2E8F0), Color(0xFFCBD5E1)],
             loadingFallback: Color(0xFFE2E8F0),
@@ -788,7 +1080,7 @@ class _DiscoveryFeedPalette {
             videoOverlayBorder: Color(0x1A0F172A),
             mediaDimOverlay: Color(0x14FFFFFF),
             primaryBorder: Colors.white,
-            bottomAccent: Color(0xFF15803D),
+            bottomAccent: AppTheme.primary700,
             tabBarBackground: Color(0xCCFFFFFF),
             tabBarBorder: Color(0x26000000),
             tabActiveText: Color(0xFF0F172A),
