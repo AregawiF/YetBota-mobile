@@ -7,6 +7,7 @@ import 'package:yetbota_mobile/app/theme/theme_cubit.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/discovery_feed_page.dart';
+import 'package:yetbota_mobile/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:yetbota_mobile/features/show_on_map/presentation/show_on_map_overlay_page.dart';
 
 class LocationFeedPage extends StatelessWidget {
@@ -63,6 +64,7 @@ class LocationFeedPage extends StatelessWidget {
             _TopHeader(
               profileImageUrl: _headerProfileImage,
               onProfileTap: () => _showProfileMenu(context),
+              onNotificationTap: () => NotificationsPage.open(context),
             ),
             Expanded(
               child: Center(
@@ -208,10 +210,15 @@ class LocationFeedPage extends StatelessWidget {
 }
 
 class _TopHeader extends StatelessWidget {
-  const _TopHeader({required this.profileImageUrl, required this.onProfileTap});
+  const _TopHeader({
+    required this.profileImageUrl,
+    required this.onProfileTap,
+    required this.onNotificationTap,
+  });
 
   final String profileImageUrl;
   final VoidCallback onProfileTap;
+  final VoidCallback onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +263,7 @@ class _TopHeader extends StatelessWidget {
                       Stack(
                         children: [
                           IconButton(
-                            onPressed: () {},
+                            onPressed: onNotificationTap,
                             icon: Icon(
                               Icons.notifications_none_rounded,
                               color: palette.iconSecondary,

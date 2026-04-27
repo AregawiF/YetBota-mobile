@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/ask_question_page.dart';
+import 'package:yetbota_mobile/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/community_qa_detail_page.dart';
 
 const _qaFilters = ['All', 'Housing', 'Safety', 'Nightlife'];
@@ -56,6 +57,7 @@ class CommunityQaPage extends StatelessWidget {
             _Header(
               palette: palette,
               onPostTap: () => _openAskQuestion(context),
+              onNotificationTap: () => NotificationsPage.open(context),
             ),
             Expanded(
               child: Center(
@@ -115,10 +117,15 @@ class CommunityQaPage extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.palette, required this.onPostTap});
+  const _Header({
+    required this.palette,
+    required this.onPostTap,
+    required this.onNotificationTap,
+  });
 
   final _QaPalette palette;
   final VoidCallback onPostTap;
+  final VoidCallback onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
@@ -184,17 +191,21 @@ class _Header extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: palette.softSurface,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.notifications_none_rounded,
-                          color: palette.iconColor,
-                          size: 20,
+                      Material(
+                        color: palette.softSurface,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: onNotificationTap,
+                          child: SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: Icon(
+                              Icons.notifications_none_rounded,
+                              color: palette.iconColor,
+                              size: 20,
+                            ),
+                          ),
                         ),
                       ),
                     ],
