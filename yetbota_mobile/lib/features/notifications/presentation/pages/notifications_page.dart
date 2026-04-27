@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
 
-/// Notifications inbox — design reference: Figma node 1:2865.
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
 

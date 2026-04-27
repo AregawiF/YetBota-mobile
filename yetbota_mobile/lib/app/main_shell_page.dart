@@ -4,6 +4,7 @@ import 'package:yetbota_mobile/features/ai_assistant/presentation/pages/ai_assis
 import 'package:yetbota_mobile/features/discovery_feed/presentation/pages/community_qa_page.dart';
 import 'package:yetbota_mobile/features/location_feed/presentation/pages/create_location_post_page.dart';
 import 'package:yetbota_mobile/features/location_feed/presentation/pages/location_feed_page.dart';
+import 'package:yetbota_mobile/features/profile/presentation/pages/profile_page.dart';
 
 class MainShellPage extends StatefulWidget {
   const MainShellPage({super.key, required this.token});
@@ -123,9 +124,9 @@ class _MainShellPageState extends State<MainShellPage> {
                       return <Route<dynamic>>[
                         MaterialPageRoute<void>(
                           settings: const RouteSettings(name: '/'),
-                          builder: (_) => const _ShellPlaceholderTab(
-                            title: 'Profile',
-                            message: 'Profile is coming soon.',
+                          builder: (_) => ProfilePage(
+                            onBackFromRoot: () =>
+                                _onTabTapped(BottomNavItem.feed),
                           ),
                         ),
                       ];
@@ -145,52 +146,6 @@ class _MainShellPageState extends State<MainShellPage> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ShellPlaceholderTab extends StatelessWidget {
-  const _ShellPlaceholderTab({required this.title, required this.message});
-
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      backgroundColor: isDark ? Colors.black : const Color(0xFFF8FAFC),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isDark
-                      ? const Color(0xFF94A3B8)
-                      : const Color(0xFF64748B),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
