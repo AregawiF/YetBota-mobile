@@ -40,6 +40,29 @@ class GrpcAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
+  Future<Result<void>> logout({
+    required String refreshToken,
+    required String username,
+  }) async {
+    if (refreshToken.isEmpty) {
+      return const Ok(null);
+    }
+    try {
+      final resp = await _authClient.logout(
+        LogoutRequest(refreshToken: refreshToken, username: username),
+      );
+      if (!resp.success || resp.code != _successCode) {
+        return Err(_envelopeFailure(resp.code, resp.message));
+      }
+      return const Ok(null);
+    } on GrpcError catch (e) {
+      return Err(_grpcToFailure(e));
+    } catch (e) {
+      return Err(NetworkFailure('Logout failed: $e'));
+    }
+  }
+
+  @override
   Future<Result<OtpInfo>> generateMobileOtp({
     required String mobile,
     required String random,
@@ -112,14 +135,15 @@ class GrpcAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   AuthSession _sessionFromTokenData(TokenData data, {String? username}) {
+    final now = DateTime.now();
     return AuthSession(
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
-      accessTokenTtl: data.hasAccessTokenTtl()
-          ? Duration(seconds: data.accessTokenTtl.seconds.toInt())
+      accessTokenExpiresAt: data.hasAccessTokenTtl()
+          ? now.add(Duration(seconds: data.accessTokenTtl.seconds.toInt()))
           : null,
-      refreshTokenTtl: data.hasRefreshTokenTtl()
-          ? Duration(seconds: data.refreshTokenTtl.seconds.toInt())
+      refreshTokenExpiresAt: data.hasRefreshTokenTtl()
+          ? now.add(Duration(seconds: data.refreshTokenTtl.seconds.toInt()))
           : null,
       username: username,
     );

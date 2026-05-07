@@ -8,6 +8,11 @@ abstract interface class AuthRemoteDataSource {
     required String password,
   });
 
+  Future<Result<void>> logout({
+    required String refreshToken,
+    required String username,
+  });
+
   Future<Result<OtpInfo>> generateMobileOtp({
     required String mobile,
     required String random,

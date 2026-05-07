@@ -38,3 +38,12 @@ final class AuthSessionEstablished extends AuthEvent {
   @override
   List<Object?> get props => [session.accessToken, session.username];
 }
+
+final class AuthSessionRevoked extends AuthEvent {
+  const AuthSessionRevoked({this.reason});
+
+  final String? reason;
+
+  @override
+  List<Object?> get props => [reason];
+}

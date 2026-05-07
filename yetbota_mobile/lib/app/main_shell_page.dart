@@ -7,9 +7,7 @@ import 'package:yetbota_mobile/features/location_feed/presentation/pages/locatio
 import 'package:yetbota_mobile/features/profile/presentation/pages/profile_page.dart';
 
 class MainShellPage extends StatefulWidget {
-  const MainShellPage({super.key, required this.token});
-
-  final String token;
+  const MainShellPage({super.key});
 
   @override
   State<MainShellPage> createState() => _MainShellPageState();
@@ -85,7 +83,7 @@ class _MainShellPageState extends State<MainShellPage> {
                       return <Route<dynamic>>[
                         MaterialPageRoute<void>(
                           settings: const RouteSettings(name: '/'),
-                          builder: (_) => LocationFeedPage(token: widget.token),
+                          builder: (_) => const LocationFeedPage(),
                         ),
                       ];
                     },

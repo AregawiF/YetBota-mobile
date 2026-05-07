@@ -47,15 +47,16 @@ class _AuthGateState extends State<_AuthGate> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         return switch (state) {
-          AuthUnknown() => const Scaffold(body: Center(child: CircularProgressIndicator())),
-          AuthAuthenticating() =>
-            const Scaffold(body: Center(child: CircularProgressIndicator())),
-          AuthAuthenticated(accessToken: final token) =>
-            MainShellPage(token: token),
+          AuthUnknown() => const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          ),
+          AuthAuthenticating() => const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          ),
+          AuthAuthenticated() => const MainShellPage(),
           AuthUnauthenticated() => const WelcomePage(),
         };
       },
     );
   }
 }
-
