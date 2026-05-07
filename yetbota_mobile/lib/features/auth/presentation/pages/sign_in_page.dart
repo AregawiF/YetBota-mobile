@@ -5,7 +5,6 @@ import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_state.dart';
 import 'package:yetbota_mobile/features/auth/presentation/pages/sign_in_phone_page.dart';
-import 'package:yetbota_mobile/features/auth/presentation/pages/sign_up_page.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -15,44 +14,42 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscure = true;
-  String? _emailError;
+  String? _usernameError;
   String? _passwordError;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _submit() {
-    final email = _emailController.text.trim();
+    final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
-    String? emailError;
+    String? usernameError;
     String? passwordError;
 
-    if (email.isEmpty) {
-      emailError = 'Email is required';
-    } else if (!email.contains('@')) {
-      emailError = 'Enter a valid email';
+    if (username.isEmpty) {
+      usernameError = 'Username is required';
     }
 
     if (password.isEmpty) passwordError = 'Password is required';
 
     setState(() {
-      _emailError = emailError;
+      _usernameError = usernameError;
       _passwordError = passwordError;
     });
 
-    if (emailError != null || passwordError != null) return;
+    if (usernameError != null || passwordError != null) return;
 
     context.read<AuthBloc>().add(
           AuthSignInRequested(
-            email: email,
+            username: username,
             password: password,
           ),
         );
@@ -110,17 +107,17 @@ class _SignInPageState extends State<SignInPage> {
                           ),
                           const SizedBox(height: 28),
                           _LabeledField(
-                            label: 'Email',
+                            label: 'Username',
                             child: _DarkTextField(
-                              controller: _emailController,
-                              hintText: 'Enter your email',
-                              keyboardType: TextInputType.emailAddress,
+                              controller: _usernameController,
+                              hintText: 'Enter your username',
+                              keyboardType: TextInputType.text,
                               textInputAction: TextInputAction.next,
                             ),
                           ),
-                          if (_emailError != null || error != null) ...[
+                          if (_usernameError != null || error != null) ...[
                             const SizedBox(height: 8),
-                            _FieldErrorText(text: _emailError ?? error!),
+                            _FieldErrorText(text: _usernameError ?? error!),
                           ],
                           const SizedBox(height: 16),
                           Row(
@@ -222,7 +219,9 @@ class _SignInPageState extends State<SignInPage> {
                             actionText: 'Sign Up',
                             onAction: () {
                               Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const SignUpPage()),
+                                MaterialPageRoute(
+                                  builder: (_) => const SignInPhonePage(),
+                                ),
                               );
                             },
                           ),

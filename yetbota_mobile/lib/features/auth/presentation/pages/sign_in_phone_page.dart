@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/register_bloc.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/register_event.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/register_state.dart';
 import 'package:yetbota_mobile/features/auth/presentation/pages/otp_verification_page.dart';
-import 'package:yetbota_mobile/features/auth/presentation/pages/sign_up_page.dart';
+import 'package:yetbota_mobile/features/auth/presentation/pages/sign_in_page.dart';
 
 class SignInPhonePage extends StatefulWidget {
   const SignInPhonePage({super.key});
@@ -13,6 +17,13 @@ class SignInPhonePage extends StatefulWidget {
 class _SignInPhonePageState extends State<SignInPhonePage> {
   final _phoneController = TextEditingController();
   String? _phoneError;
+  bool _navigatedToOtp = false;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<RegisterBloc>().add(const RegisterReset());
+  }
 
   @override
   void dispose() {
@@ -34,205 +45,247 @@ class _SignInPhonePageState extends State<SignInPhonePage> {
     setState(() => _phoneError = error);
     if (error != null) return;
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => OtpVerificationPage(phoneE164: '+251$digits'),
-      ),
-    );
+    final mobileE164 = '+251$digits';
+    context.read<RegisterBloc>().add(RegisterMobileSubmitted(mobileE164));
+  }
+
+  void _onStateChanged(BuildContext context, RegisterState state) {
+    if (state.step == RegisterStep.otp && !_navigatedToOtp) {
+      _navigatedToOtp = true;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => OtpVerificationPage(phoneE164: state.mobile ?? ''),
+        ),
+      ).then((_) {
+        if (mounted) _navigatedToOtp = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _TopBar(
-              title: 'Sign In',
-              onBack: () => Navigator.of(context).maybePop(),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Image.asset(
-                        'assets/icons/discover_icon.png',
-                        width: 160,
-                        height: 160,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    Text(
-                      'Yet Bota',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: cs.onSurface,
-                        fontSize: 36,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Connect with your neighborhood and find local answers.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: cs.onSurface.withOpacity(dark ? 0.7 : 0.75),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Padding(
-                      padding: EdgeInsets.only(left: 4, bottom: 12),
-                      child: Text(
-                        'Phone Number',
-                        style: TextStyle(
-                          color: cs.onSurface,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Row(
+
+    return BlocConsumer<RegisterBloc, RegisterState>(
+      listener: _onStateChanged,
+      builder: (context, state) {
+        final remoteError = state.errorMessage;
+        final isLoading = state.requestingOtp;
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                _TopBar(
+                  title: 'Sign Up',
+                  onBack: () => Navigator.of(context).maybePop(),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Container(
-                          height: 64,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: dark ? const Color(0xFF121212) : cs.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: dark ? const Color(0xFF2D2D2D) : cs.outlineVariant,
-                            ),
+                        Center(
+                          child: Image.asset(
+                            'assets/icons/discover_icon.png',
+                            width: 160,
+                            height: 160,
+                            fit: BoxFit.contain,
                           ),
+                        ),
+                        Text(
+                          'Yet Bota',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: cs.onSurface,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'We\'ll text you a verification code to confirm your number.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: cs.onSurface.withOpacity(dark ? 0.7 : 0.75),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 12),
                           child: Text(
-                            '+251',
+                            'Phone Number',
                             style: TextStyle(
                               color: cs.onSurface,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            style: TextStyle(
-                              color: cs.onSurface,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.0,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: '912 345 678',
-                              hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.35)),
-                              filled: true,
-                              fillColor: dark ? const Color(0xFF121212) : cs.surface,
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: dark ? const Color(0xFF2D2D2D) : cs.outlineVariant,
-                                ),
+                        Row(
+                          children: [
+                            Container(
+                              height: 64,
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: dark ? const Color(0xFF121212) : cs.surface,
                                 borderRadius: BorderRadius.circular(20),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: AppTheme.primary.withOpacity(0.6),
-                                  width: 2,
+                                border: Border.all(
+                                  color: dark
+                                      ? const Color(0xFF2D2D2D)
+                                      : cs.outlineVariant,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
                               ),
-                              contentPadding:
-                                  const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                              child: Text(
+                                '+251',
+                                style: TextStyle(
+                                  color: cs.onSurface,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                style: TextStyle(
+                                  color: cs.onSurface,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.0,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: '912 345 678',
+                                  hintStyle: TextStyle(
+                                    color: cs.onSurface.withOpacity(0.35),
+                                  ),
+                                  filled: true,
+                                  fillColor: dark
+                                      ? const Color(0xFF121212)
+                                      : cs.surface,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: dark
+                                          ? const Color(0xFF2D2D2D)
+                                          : cs.outlineVariant,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: AppTheme.primary.withOpacity(0.6),
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 18,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_phoneError != null || remoteError != null) ...[
+                          const SizedBox(height: 10),
+                          _FieldErrorText(text: _phoneError ?? remoteError ?? ''),
+                        ],
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          height: 56,
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            onPressed: isLoading ? null : _sendOtp,
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.4,
+                                      color: Colors.black,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Text(
+                                        'Send OTP',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.chevron_right, size: 22),
+                                    ],
+                                  ),
                           ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text.rich(
+                          TextSpan(
+                            text: 'By continuing, you agree to our ',
+                            style: TextStyle(
+                              color: cs.onSurface.withOpacity(0.55),
+                              fontSize: 12,
+                              height: 1.4,
+                            ),
+                            children: const [
+                              TextSpan(
+                                text: 'Terms of Service',
+                                style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              TextSpan(text: ' and '),
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 28),
+                        _BottomInline(
+                          text: 'Already have an account?',
+                          actionText: 'Sign In',
+                          onAction: () {
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (_) => const SignInPage(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
-                    if (_phoneError != null) ...[
-                      const SizedBox(height: 10),
-                      _FieldErrorText(text: _phoneError!),
-                    ],
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      height: 56,
-                      child: FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        onPressed: _sendOtp,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Text(
-                              'Send OTP',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(Icons.chevron_right, size: 22),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Text.rich(
-                      TextSpan(
-                        text: 'By continuing, you agree to our ',
-                        style: TextStyle(
-                          color: cs.onSurface.withOpacity(0.55),
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: 'Terms of Service',
-                            style: TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          TextSpan(text: ' and '),
-                          TextSpan(
-                            text: 'Privacy Policy',
-                            style: TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 28),
-                    _BottomInline(
-                      text: 'New to the community?',
-                      actionText: 'Sign Up',
-                      onAction: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const SignUpPage()),
-                        );
-                      },
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -254,7 +307,11 @@ class _TopBar extends StatelessWidget {
             width: 48,
             child: IconButton(
               onPressed: onBack,
-              icon: Icon(Icons.arrow_back_ios_new, color: cs.onSurface, size: 22),
+              icon: Icon(
+                Icons.arrow_back_ios_new,
+                color: cs.onSurface,
+                size: 22,
+              ),
             ),
           ),
           Expanded(
@@ -330,4 +387,3 @@ class _FieldErrorText extends StatelessWidget {
     );
   }
 }
-

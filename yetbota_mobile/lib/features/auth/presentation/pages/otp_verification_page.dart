@@ -2,7 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/register_bloc.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/register_event.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/register_state.dart';
+import 'package:yetbota_mobile/features/auth/presentation/pages/complete_registration_page.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   const OtpVerificationPage({super.key, required this.phoneE164});
@@ -18,7 +23,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   final _nodes = List.generate(6, (_) => FocusNode());
   Timer? _timer;
   int _secondsRemaining = 55;
-  String? _otpError;
+  String? _localError;
+  bool _navigatedToDetails = false;
 
   @override
   void initState() {
@@ -53,324 +59,365 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     if (_secondsRemaining > 0) return;
     setState(() {
       _secondsRemaining = 55;
-      _otpError = null;
+      _localError = null;
       for (final c in _controllers) {
         c.clear();
       }
     });
     _nodes.first.requestFocus();
+    context.read<RegisterBloc>().add(const RegisterOtpResendRequested());
   }
 
   void _verify() {
     final code = _code;
     if (code.length != 6 || code.contains(RegExp(r'[^0-9]'))) {
-      setState(() => _otpError = 'Enter the 6-digit code');
+      setState(() => _localError = 'Enter the 6-digit code');
       return;
     }
-    setState(() => _otpError = null);
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    setState(() => _localError = null);
+    context.read<RegisterBloc>().add(RegisterOtpSubmitted(code));
+  }
+
+  void _onStateChanged(BuildContext context, RegisterState state) {
+    if (state.step == RegisterStep.details && !_navigatedToDetails) {
+      _navigatedToDetails = true;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const CompleteRegistrationPage(),
+        ),
+      ).then((_) {
+        if (mounted) _navigatedToDetails = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final phoneMasked = _mask(widget.phoneE164);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _Header(
-              title: 'Verify OTP',
-              onBack: () => Navigator.of(context).maybePop(),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            height: 80,
-                            width: 80,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary.withOpacity(0.10),
-                              borderRadius: BorderRadius.circular(26),
-                            ),
-                            child: const Icon(Icons.sms, color: AppTheme.primary, size: 38),
-                          ),
-                          Positioned(
-                            top: -2,
-                            right: -2,
-                            child: Container(
-                              height: 16,
-                              width: 16,
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppTheme.darkBackground, width: 4),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Check your phone',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.6,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "We've sent a 6-digit verification code to",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Color(0xFF9CA3AF),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+    return BlocConsumer<RegisterBloc, RegisterState>(
+      listener: _onStateChanged,
+      builder: (context, state) {
+        final remoteError = state.errorMessage;
+        final isVerifying = state.verifyingOtp;
+
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                _Header(
+                  title: 'Verify OTP',
+                  onBack: () => Navigator.of(context).maybePop(),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Flexible(
-                          child: Text(
-                            phoneMasked,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: AppTheme.primary.withOpacity(0.10),
-                            foregroundColor: AppTheme.primary,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                          onPressed: _editPhone,
-                          child: const Text(
-                            'Edit',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 26),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final maxWidth = constraints.maxWidth;
-                        const gap = 8.0;
-                        const groupGap = 10.0;
-                        const dotWidth = 6.0;
-
-                        final availableForBoxes =
-                            maxWidth - (gap * 4) - (groupGap * 2) - dotWidth;
-                        final boxSize = (availableForBoxes / 6).clamp(36.0, 48.0);
-
-                        return Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Stack(
+                            clipBehavior: Clip.none,
                             children: [
-                              for (int i = 0; i < 3; i++) ...[
-                                _OtpBox(
-                                  size: boxSize,
-                                  controller: _controllers[i],
-                                  node: _nodes[i],
-                                  onChanged: (v) => _onChanged(i, v),
-                                  onBackspaceAtEmpty: () => _onBackspace(i),
+                              Container(
+                                height: 80,
+                                width: 80,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary.withOpacity(0.10),
+                                  borderRadius: BorderRadius.circular(26),
                                 ),
-                                if (i != 2) const SizedBox(width: gap),
-                              ],
-                              const SizedBox(width: groupGap),
-                              const _OtpDot(),
-                              const SizedBox(width: groupGap),
-                              for (int i = 3; i < 6; i++) ...[
-                                _OtpBox(
-                                  size: boxSize,
-                                  controller: _controllers[i],
-                                  node: _nodes[i],
-                                  onChanged: (v) => _onChanged(i, v),
-                                  onBackspaceAtEmpty: () => _onBackspace(i),
+                                child: const Icon(
+                                  Icons.sms,
+                                  color: AppTheme.primary,
+                                  size: 38,
                                 ),
-                                if (i != 5) const SizedBox(width: gap),
-                              ],
+                              ),
+                              Positioned(
+                                top: -2,
+                                right: -2,
+                                child: Container(
+                                  height: 16,
+                                  width: 16,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppTheme.darkBackground,
+                                      width: 4,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
-                        );
-                      },
-                    ),
-                    if (_otpError != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _otpError!,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
                         ),
-                      ),
-                    ],
-                    const SizedBox(height: 28),
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.04),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Check your phone',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.6,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        const SizedBox(height: 10),
+                        const Text(
+                          "We've sent a 6-digit verification code to",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.schedule, color: Color(0xFF9CA3AF), size: 16),
+                            Flexible(
+                              child: Text(
+                                phoneMasked,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                             const SizedBox(width: 8),
-                            Text(
-                              _formatSeconds(_secondsRemaining),
-                              style: const TextStyle(
-                                color: Color(0xFFD1D5DB),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor:
+                                    AppTheme.primary.withOpacity(0.10),
+                                foregroundColor: AppTheme.primary,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                              onPressed: _editPhone,
+                              child: const Text(
+                                'Edit',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Center(
-                      child: TextButton(
-                        onPressed: _secondsRemaining > 0 ? null : _resend,
-                        child: Text.rich(
-                          TextSpan(
-                            text: "Didn't get it? ",
-                            style: const TextStyle(
-                              color: Color(0xFF9CA3AF),
-                              fontSize: 14,
+                        const SizedBox(height: 26),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final maxWidth = constraints.maxWidth;
+                            const gap = 8.0;
+                            const groupGap = 10.0;
+                            const dotWidth = 6.0;
+
+                            final availableForBoxes =
+                                maxWidth - (gap * 4) - (groupGap * 2) - dotWidth;
+                            final boxSize =
+                                (availableForBoxes / 6).clamp(36.0, 48.0);
+
+                            return Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  for (int i = 0; i < 3; i++) ...[
+                                    _OtpBox(
+                                      size: boxSize,
+                                      controller: _controllers[i],
+                                      node: _nodes[i],
+                                      onChanged: (v) => _onChanged(i, v),
+                                      onBackspaceAtEmpty: () => _onBackspace(i),
+                                    ),
+                                    if (i != 2) const SizedBox(width: gap),
+                                  ],
+                                  const SizedBox(width: groupGap),
+                                  const _OtpDot(),
+                                  const SizedBox(width: groupGap),
+                                  for (int i = 3; i < 6; i++) ...[
+                                    _OtpBox(
+                                      size: boxSize,
+                                      controller: _controllers[i],
+                                      node: _nodes[i],
+                                      onChanged: (v) => _onChanged(i, v),
+                                      onBackspaceAtEmpty: () => _onBackspace(i),
+                                    ),
+                                    if (i != 5) const SizedBox(width: gap),
+                                  ],
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        if (_localError != null || remoteError != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _localError ?? remoteError ?? '',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
-                            children: [
-                              TextSpan(
-                                text: _secondsRemaining > 0
-                                    ? 'Resend in ${_secondsRemaining}s'
-                                    : 'Resend',
-                                style: const TextStyle(
-                                  color: AppTheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          ),
+                        ],
+                        const SizedBox(height: 28),
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.04),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.08),
                               ),
-                            ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.schedule,
+                                  color: Color(0xFF9CA3AF),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatSeconds(_secondsRemaining),
+                                  style: const TextStyle(
+                                    color: Color(0xFFD1D5DB),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final maxWidth = constraints.maxWidth;
-                        final minHeight = 56.0;
-                        final height = minHeight.clamp(52.0, 56.0);
-                        final maxTextWidth = maxWidth - 24;
-
-                        return SizedBox(
-                          height: height,
+                        const SizedBox(height: 14),
+                        Center(
+                          child: TextButton(
+                            onPressed: _secondsRemaining > 0 ? null : _resend,
+                            child: Text.rich(
+                              TextSpan(
+                                text: "Didn't get it? ",
+                                style: const TextStyle(
+                                  color: Color(0xFF9CA3AF),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: _secondsRemaining > 0
+                                        ? 'Resend in ${_secondsRemaining}s'
+                                        : 'Resend',
+                                    style: const TextStyle(
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        SizedBox(
+                          height: 56,
                           width: double.infinity,
                           child: FilledButton(
                             style: FilledButton.styleFrom(
                               backgroundColor: AppTheme.primary,
-                              foregroundColor: Theme.of(context).colorScheme.surface,
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.surface,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               elevation: 12,
                               shadowColor: AppTheme.primary.withOpacity(0.18),
                             ),
-                            onPressed: _verify,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: maxTextWidth),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    Text(
-                                      'Verify & Continue',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
+                            onPressed: isVerifying ? null : _verify,
+                            child: isVerifying
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.4,
+                                      color: Colors.black,
                                     ),
-                                    SizedBox(width: 10),
-                                    Icon(Icons.check_circle, size: 20),
-                                  ],
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Text(
+                                        'Verify & Continue',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Icon(Icons.check_circle, size: 20),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        const Text.rich(
+                          TextSpan(
+                            text: "By continuing, you agree to Yet Bota's\n",
+                            style: TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontSize: 11,
+                              height: 1.4,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'Community Guidelines',
+                                style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: AppTheme.primary500a4D,
                                 ),
                               ),
-                            ),
+                              TextSpan(text: ' and '),
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: AppTheme.primary500a4D,
+                                ),
+                              ),
+                              TextSpan(text: '.'),
+                            ],
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                    const Text.rich(
-                      TextSpan(
-                        text: "By continuing, you agree to Yet Bota's\n",
-                        style: TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 11,
-                          height: 1.4,
+                          textAlign: TextAlign.center,
                         ),
-                        children: [
-                          TextSpan(
-                            text: 'Community Guidelines',
-                            style: TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                              decorationColor: AppTheme.primary500a4D,
-                            ),
-                          ),
-                          TextSpan(text: ' and '),
-                          TextSpan(
-                            text: 'Privacy Policy',
-                            style: TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                              decorationColor: AppTheme.primary500a4D,
-                            ),
-                          ),
-                          TextSpan(text: '.'),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -379,9 +426,9 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     if (v.isEmpty) return;
     if (v.length > 1) {
       _controllers[index].text = v.substring(v.length - 1);
-      _controllers[index].selection = TextSelection.collapsed(offset: 1);
+      _controllers[index].selection = const TextSelection.collapsed(offset: 1);
     }
-    setState(() => _otpError = null);
+    setState(() => _localError = null);
     if (index < _nodes.length - 1) {
       _nodes[index + 1].requestFocus();
     } else {
@@ -482,7 +529,8 @@ class _OtpBox extends StatelessWidget {
       child: KeyboardListener(
         focusNode: FocusNode(skipTraversal: true),
         onKeyEvent: (event) {
-          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.backspace) {
             if (controller.text.isEmpty) onBackspaceAtEmpty();
           }
         },
@@ -541,4 +589,3 @@ class _OtpDot extends StatelessWidget {
     );
   }
 }
-

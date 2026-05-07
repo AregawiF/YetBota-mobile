@@ -24,10 +24,14 @@ final class AuthAuthenticating extends AuthState {
 }
 
 final class AuthAuthenticated extends AuthState {
-  const AuthAuthenticated({required this.token});
-  final String token;
+  const AuthAuthenticated({
+    required this.accessToken,
+    this.username,
+  });
+
+  final String accessToken;
+  final String? username;
 
   @override
-  List<Object?> get props => [token];
+  List<Object?> get props => [accessToken, username];
 }
-

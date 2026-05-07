@@ -18,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthStarted>(_onStarted);
     on<AuthSignInRequested>(_onSignInRequested);
     on<AuthSignOutRequested>(_onSignOutRequested);
+    on<AuthSessionEstablished>(_onSessionEstablished);
   }
 
   final GetSession _getSession;
@@ -31,7 +32,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         if (session == null) {
           emit(const AuthUnauthenticated());
         } else {
-          emit(AuthAuthenticated(token: session.token));
+          emit(AuthAuthenticated(
+            accessToken: session.accessToken,
+            username: session.username,
+          ));
         }
       case Err(failure: final failure):
         emit(AuthUnauthenticated(errorMessage: failure.message));
@@ -43,10 +47,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthAuthenticating());
-    final result = await _signIn(email: event.email, password: event.password);
+    final result = await _signIn(
+      username: event.username,
+      password: event.password,
+    );
     switch (result) {
       case Ok(value: final session):
-        emit(AuthAuthenticated(token: session.token));
+        emit(AuthAuthenticated(
+          accessToken: session.accessToken,
+          username: session.username,
+        ));
       case Err(failure: final failure):
         emit(AuthUnauthenticated(errorMessage: failure.message));
     }
@@ -64,5 +74,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthUnauthenticated(errorMessage: failure.message));
     }
   }
-}
 
+  void _onSessionEstablished(
+    AuthSessionEstablished event,
+    Emitter<AuthState> emit,
+  ) {
+    emit(AuthAuthenticated(
+      accessToken: event.session.accessToken,
+      username: event.session.username,
+    ));
+  }
+}

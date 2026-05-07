@@ -50,7 +50,8 @@ class _AuthGateState extends State<_AuthGate> {
           AuthUnknown() => const Scaffold(body: Center(child: CircularProgressIndicator())),
           AuthAuthenticating() =>
             const Scaffold(body: Center(child: CircularProgressIndicator())),
-          AuthAuthenticated(token: final token) => MainShellPage(token: token),
+          AuthAuthenticated(accessToken: final token) =>
+            MainShellPage(token: token),
           AuthUnauthenticated() => const WelcomePage(),
         };
       },

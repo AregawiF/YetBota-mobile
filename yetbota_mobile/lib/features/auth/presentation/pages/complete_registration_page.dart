@@ -1,48 +1,115 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
-import 'package:yetbota_mobile/features/auth/presentation/pages/sign_in_phone_page.dart';
-import 'package:yetbota_mobile/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/register_bloc.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/register_event.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/register_state.dart';
 
-class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+/// Final step of the phone-OTP signup flow: collect profile details, call `Register`, then auto-Login. On success
+class CompleteRegistrationPage extends StatefulWidget {
+  const CompleteRegistrationPage({super.key});
 
   @override
-  State<SignUpPage> createState() => _SignUpPageState();
+  State<CompleteRegistrationPage> createState() =>
+      _CompleteRegistrationPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
+class _CompleteRegistrationPageState extends State<CompleteRegistrationPage> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscure = true;
+
   String? _firstNameError;
   String? _lastNameError;
-  String? _emailError;
+  String? _usernameError;
   String? _passwordError;
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _submit() {
+    final first = _firstNameController.text.trim();
+    final last = _lastNameController.text.trim();
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+
+    String? firstErr;
+    String? lastErr;
+    String? userErr;
+    String? passErr;
+
+    if (first.isEmpty) firstErr = 'Required';
+    if (last.isEmpty) lastErr = 'Required';
+    if (username.isEmpty) {
+      userErr = 'Username is required';
+    } else if (username.length < 3) {
+      userErr = 'Use at least 3 characters';
+    }
+    if (password.isEmpty) {
+      passErr = 'Password is required';
+    } else if (password.length < 8) {
+      passErr = 'Use at least 8 characters';
+    }
+
+    setState(() {
+      _firstNameError = firstErr;
+      _lastNameError = lastErr;
+      _usernameError = userErr;
+      _passwordError = passErr;
+    });
+
+    if (firstErr != null ||
+        lastErr != null ||
+        userErr != null ||
+        passErr != null) {
+      return;
+    }
+
+    context.read<RegisterBloc>().add(
+          RegisterDetailsSubmitted(
+            firstName: first,
+            lastName: last,
+            username: username,
+            password: password,
+          ),
+        );
+  }
+
+  void _onStateChanged(BuildContext context, RegisterState state) {
+    final session = state.session;
+    if (state.step == RegisterStep.done && session != null) {
+      context.read<AuthBloc>().add(AuthSessionEstablished(session));
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      body: Stack(
-        children: [
-          const _MapBackdrop(),
-          SafeArea(
+
+    return BlocConsumer<RegisterBloc, RegisterState>(
+      listener: _onStateChanged,
+      builder: (context, state) {
+        final remoteError = state.errorMessage;
+        final isBusy = state.registering;
+
+        return Scaffold(
+          body: SafeArea(
             child: Column(
               children: [
                 _TopBar(
-                  title: 'Sign Up',
+                  title: 'Complete Sign Up',
                   onBack: () => Navigator.of(context).maybePop(),
                 ),
                 Expanded(
@@ -54,22 +121,22 @@ class _SignUpPageState extends State<SignUpPage> {
                         const SizedBox(height: 8),
                         const _IconMark(),
                         Text(
-                          'Join Yet Bota.',
+                          'Tell us about you.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 32,
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: cs.onSurface,
-                            letterSpacing: -0.8,
+                            letterSpacing: -0.6,
                           ),
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Start exploring your local community today.',
+                          'Just a few more details to finish creating your account.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: cs.onSurface.withOpacity(dark ? 0.65 : 0.7),
-                            fontSize: 16,
+                            fontSize: 15,
                           ),
                         ),
                         const SizedBox(height: 28),
@@ -98,33 +165,36 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                           ],
                         ),
-                        if (_firstNameError != null || _lastNameError != null) ...[
+                        if (_firstNameError != null ||
+                            _lastNameError != null) ...[
                           const SizedBox(height: 8),
                           Row(
                             children: [
                               Expanded(
-                                child: _FieldErrorText(text: _firstNameError ?? ''),
+                                child: _FieldErrorText(
+                                    text: _firstNameError ?? ''),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
-                                child: _FieldErrorText(text: _lastNameError ?? ''),
+                                child:
+                                    _FieldErrorText(text: _lastNameError ?? ''),
                               ),
                             ],
                           ),
                         ],
                         const SizedBox(height: 16),
                         _LabeledField(
-                          label: 'Email',
+                          label: 'Username',
                           child: _DarkTextField(
-                            controller: _emailController,
-                            hintText: 'name@example.com',
-                            keyboardType: TextInputType.emailAddress,
+                            controller: _usernameController,
+                            hintText: 'choose a username',
+                            keyboardType: TextInputType.text,
                             textInputAction: TextInputAction.next,
                           ),
                         ),
-                        if (_emailError != null) ...[
+                        if (_usernameError != null) ...[
                           const SizedBox(height: 8),
-                          _FieldErrorText(text: _emailError!),
+                          _FieldErrorText(text: _usernameError!),
                         ],
                         const SizedBox(height: 16),
                         _LabeledField(
@@ -140,6 +210,10 @@ class _SignUpPageState extends State<SignUpPage> {
                           const SizedBox(height: 8),
                           _FieldErrorText(text: _passwordError!),
                         ],
+                        if (remoteError != null) ...[
+                          const SizedBox(height: 12),
+                          _FieldErrorText(text: remoteError),
+                        ],
                         const SizedBox(height: 20),
                         SizedBox(
                           height: 56,
@@ -153,55 +227,35 @@ class _SignUpPageState extends State<SignUpPage> {
                               elevation: 10,
                               shadowColor: AppTheme.primary.withOpacity(0.18),
                             ),
-                            onPressed: _submit,
-                            child: const Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        const _DividerLabel(text: 'Or Register With'),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 56,
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor:
-                                  dark ? Colors.transparent : cs.surface,
-                              foregroundColor: cs.onSurface,
-                              side: BorderSide(
-                                color: dark ? const Color(0xFF222222) : cs.outlineVariant,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const SignInPhonePage()),
-                              );
-                            },
-                            icon: Icon(Icons.call, color: dark ? Colors.white : AppTheme.primary),
-                            label: const Text(
-                              'Continue with Phone Number',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
+                            onPressed: isBusy ? null : _submit,
+                            child: isBusy
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.4,
+                                      color: Colors.black,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Create Account',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 20),
                         Text.rich(
                           TextSpan(
-                            text: 'By signing up, you agree to our ',
+                            text: 'By creating an account, you agree to our ',
                             style: TextStyle(
                               color: cs.onSurface.withOpacity(0.55),
                               fontSize: 12,
                               height: 1.4,
                             ),
-                            children: [
+                            children: const [
                               TextSpan(
                                 text: 'Terms of Service',
                                 style: TextStyle(
@@ -222,16 +276,6 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 28),
-                        _BottomBar(
-                          text: 'Already have an account?',
-                          actionText: 'Sign In',
-                          onAction: () {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (_) => const SignInPage()),
-                            );
-                          },
-                        ),
                       ],
                     ),
                   ),
@@ -239,41 +283,9 @@ class _SignUpPageState extends State<SignUpPage> {
               ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
-  }
-
-  void _submit() {
-    final first = _firstNameController.text.trim();
-    final last = _lastNameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    String? firstErr;
-    String? lastErr;
-    String? emailErr;
-    String? passErr;
-
-    if (first.isEmpty) firstErr = 'Required';
-    if (last.isEmpty) lastErr = 'Required';
-    if (email.isEmpty) {
-      emailErr = 'Email is required';
-    } else if (!email.contains('@')) {
-      emailErr = 'Enter a valid email';
-    }
-    if (password.isEmpty) {
-      passErr = 'Password is required';
-    } else if (password.length < 8) {
-      passErr = 'Use at least 8 characters';
-    }
-
-    setState(() {
-      _firstNameError = firstErr;
-      _lastNameError = lastErr;
-      _emailError = emailErr;
-      _passwordError = passErr;
-    });
   }
 }
 
@@ -324,31 +336,9 @@ class _IconMark extends StatelessWidget {
     return Center(
       child: Image.asset(
         'assets/icons/pin_icon.png',
-        width: 120,
-        height: 120,
+        width: 96,
+        height: 96,
         fit: BoxFit.contain,
-      ),
-    );
-  }
-}
-
-class _MapBackdrop extends StatelessWidget {
-  const _MapBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return Positioned.fill(
-      child: Opacity(
-        opacity: dark ? 0.06 : 0.025,
-        child: ColorFiltered(
-          colorFilter: const ColorFilter.matrix(<double>[
-            0.2, 0.2, 0.2, 0, 0,
-            0.2, 0.2, 0.2, 0, 0,
-            0.2, 0.2, 0.2, 0, 0,
-            0, 0, 0, 1, 0,
-          ]),
-        ),
       ),
     );
   }
@@ -416,10 +406,12 @@ class _DarkTextField extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.6), width: 2),
+          borderSide:
+              BorderSide(color: AppTheme.primary.withOpacity(0.6), width: 2),
           borderRadius: BorderRadius.circular(14),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
@@ -458,46 +450,18 @@ class _DarkPasswordField extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.6), width: 2),
+          borderSide:
+              BorderSide(color: AppTheme.primary.withOpacity(0.6), width: 2),
           borderRadius: BorderRadius.circular(14),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         suffixIcon: IconButton(
           onPressed: onToggle,
           icon: Icon(obscure ? Icons.visibility : Icons.visibility_off),
           color: cs.onSurface.withOpacity(0.55),
         ),
       ),
-    );
-  }
-}
-
-class _DividerLabel extends StatelessWidget {
-  const _DividerLabel({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final dividerColor = dark ? const Color(0xFF222222) : cs.outlineVariant;
-    return Row(
-      children: [
-        Expanded(child: Divider(color: dividerColor)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            text,
-            style: TextStyle(
-              color: cs.onSurface.withOpacity(0.5),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2,
-            ),
-          ),
-        ),
-        Expanded(child: Divider(color: dividerColor)),
-      ],
     );
   }
 }
@@ -519,49 +483,3 @@ class _FieldErrorText extends StatelessWidget {
     );
   }
 }
-
-class _BottomBar extends StatelessWidget {
-  const _BottomBar({
-    required this.text,
-    required this.actionText,
-    required this.onAction,
-  });
-
-  final String text;
-  final String actionText;
-  final VoidCallback onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: dark ? Colors.black.withOpacity(0.8) : cs.surface,
-        border: Border(top: BorderSide(color: cs.outlineVariant.withOpacity(0.7))),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      child: TextButton(
-        onPressed: onAction,
-        child: Text.rich(
-          TextSpan(
-            text: '$text ',
-            style: TextStyle(color: cs.onSurface.withOpacity(0.7), fontSize: 14),
-            children: [
-              TextSpan(
-                text: actionText,
-                style: const TextStyle(
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-}
-
