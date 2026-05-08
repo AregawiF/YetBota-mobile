@@ -2,8 +2,12 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
 import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
+import 'package:yetbota_mobile/features/profile/domain/entities/user_profile.dart';
+import 'package:yetbota_mobile/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:yetbota_mobile/features/profile/presentation/cubit/profile_state.dart';
 
 const _kCoverImage =
     'https://www.figma.com/api/mcp/asset/99478b22-4531-40fe-a17d-17246cfa4153';
@@ -69,15 +73,27 @@ class _ProfilePageState extends State<ProfilePage> {
     const avatarOverhang = 48.0;
     final bottomPad = math.max(0.0, BottomNav.mainShellHeight(context) + 16);
 
+    final profileState = context.watch<ProfileCubit>().state;
+    final profile = profileState.profile;
+    final isLoading = profileState.status == ProfileStatus.loading &&
+        profile == null;
+    final loadError = profileState.status == ProfileStatus.failed
+        ? profileState.errorMessage
+        : null;
+
     return Scaffold(
       backgroundColor: palette.pageBackground,
       body: Stack(
         children: [
-          SingleChildScrollView(
-            padding: EdgeInsets.only(bottom: bottomPad),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          RefreshIndicator(
+            color: AppTheme.primary,
+            onRefresh: () => context.read<ProfileCubit>().load(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.only(bottom: bottomPad),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 SizedBox(
                   height: topInset + coverH + avatarOverhang,
                   child: Stack(
@@ -165,73 +181,19 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Alex Rivers',
-                              style: palette.nameStyle,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '@arivers • Local Expert',
-                              style: palette.handleStyle,
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                _StatPair(
-                                  palette: palette,
-                                  value: '1.2k',
-                                  label: 'Followers',
-                                ),
-                                const SizedBox(width: 16),
-                                _StatPair(
-                                  palette: palette,
-                                  value: '842',
-                                  label: 'Following',
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Material(
-                        color: AppTheme.primary,
-                        borderRadius: BorderRadius.circular(9999),
-                        child: InkWell(
-                          onTap: () {},
-                          borderRadius: BorderRadius.circular(9999),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 10,
-                            ),
-                            child: Text(
-                              'EDIT PROFILE',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.6,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: _ProfileHeader(
+                    palette: palette,
+                    profile: profile,
+                    isLoading: isLoading,
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                  child: Text(
-                    'Exploring the hidden gems of Ethiopia. Coffee lover '
-                    '& historical guide. Coffee is my life.',
-                    style: palette.bioStyle,
+                  child: _ProfileBio(
+                    palette: palette,
+                    profile: profile,
+                    isLoading: isLoading,
+                    errorMessage: loadError,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -239,7 +201,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _ReputationCard(palette: palette),
+                  child: _ReputationCard(
+                    palette: palette,
+                    profile: profile,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 _RecentActivitySection(palette: palette),
@@ -257,6 +222,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ],
+              ),
             ),
           ),
           Positioned(
@@ -273,6 +239,139 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
     );
+  }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({
+    required this.palette,
+    required this.profile,
+    required this.isLoading,
+  });
+
+  final _ProfilePalette palette;
+  final UserProfile? profile;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = profile?.displayName ?? (isLoading ? 'Loading…' : '—');
+    final username = profile?.username;
+    final role = profile?.role;
+    final handle = username == null || username.isEmpty
+        ? (isLoading ? '' : '')
+        : (role != null && role.isNotEmpty && role != 'ROLE_UNSPECIFIED'
+            ? '@$username • ${_prettyRole(role)}'
+            : '@$username');
+    final followers = profile?.followers ?? 0;
+    final following = profile?.following ?? 0;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(displayName, style: palette.nameStyle),
+              if (handle.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(handle, style: palette.handleStyle),
+              ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _StatPair(
+                    palette: palette,
+                    value: _compact(followers),
+                    label: 'Followers',
+                  ),
+                  const SizedBox(width: 16),
+                  _StatPair(
+                    palette: palette,
+                    value: _compact(following),
+                    label: 'Following',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Material(
+          color: AppTheme.primary,
+          borderRadius: BorderRadius.circular(9999),
+          child: InkWell(
+            onTap: () {},
+            borderRadius: BorderRadius.circular(9999),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              child: Text(
+                'EDIT PROFILE',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String _compact(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}k';
+    return '$n';
+  }
+
+  static String _prettyRole(String role) {
+    final r = role.startsWith('ROLE_') ? role.substring(5) : role;
+    if (r.isEmpty) return r;
+    return r[0] + r.substring(1).toLowerCase();
+  }
+}
+
+class _ProfileBio extends StatelessWidget {
+  const _ProfileBio({
+    required this.palette,
+    required this.profile,
+    required this.isLoading,
+    required this.errorMessage,
+  });
+
+  final _ProfilePalette palette;
+  final UserProfile? profile;
+  final bool isLoading;
+  final String? errorMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    if (errorMessage != null && profile == null) {
+      return Text(
+        errorMessage!,
+        style: palette.bioStyle.copyWith(
+          color: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+    if (profile == null && isLoading) {
+      return Text('Loading your profile…', style: palette.bioStyle);
+    }
+    final mobile = profile?.mobile.isNotEmpty == true ? profile!.mobile : null;
+    final status = profile?.status.isNotEmpty == true ? profile!.status : null;
+    final lines = <String>[];
+    if (mobile != null) lines.add(mobile);
+    if (status != null) lines.add('Status: $status');
+    if (lines.isEmpty) {
+      return Text(
+        'Welcome to Yet Bota!',
+        style: palette.bioStyle,
+      );
+    }
+    return Text(lines.join('\n'), style: palette.bioStyle);
   }
 }
 
@@ -462,12 +561,18 @@ class _EarnedBadgesSection extends StatelessWidget {
 }
 
 class _ReputationCard extends StatelessWidget {
-  const _ReputationCard({required this.palette});
+  const _ReputationCard({required this.palette, this.profile});
 
   final _ProfilePalette palette;
+  final UserProfile? profile;
 
   @override
   Widget build(BuildContext context) {
+    final rating = profile?.rating ?? 0;
+    final contributions = profile?.contributions ?? 0;
+    final level = (rating ~/ 250).clamp(1, 99);
+    final progress = ((rating % 250) / 250).clamp(0.0, 1.0);
+    final xpLabel = '${_formatNumber(rating)} XP';
     return Container(
       padding: const EdgeInsets.all(21),
       decoration: BoxDecoration(
@@ -491,7 +596,7 @@ class _ReputationCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Level 8 Contributor',
+                      'Level $level Contributor',
                       style: palette.repTitleStyle,
                     ),
                   ],
@@ -505,7 +610,7 @@ class _ReputationCard extends StatelessWidget {
                   border: Border.all(color: AppTheme.primary500a4D),
                 ),
                 child: Text(
-                  '2,450 XP',
+                  xpLabel,
                   style: palette.xpPillStyle,
                 ),
               ),
@@ -526,8 +631,8 @@ class _ReputationCard extends StatelessWidget {
                   child: _RepStatColumn(
                     palette: palette,
                     iconUrl: _kRepBadgeIcon,
-                    value: '12',
-                    label: 'BADGES EARNED',
+                    value: '${profile?.followers ?? 0}',
+                    label: 'FOLLOWERS',
                   ),
                 ),
                 Container(
@@ -539,8 +644,8 @@ class _ReputationCard extends StatelessWidget {
                   child: _RepStatColumn(
                     palette: palette,
                     iconUrl: _kRepChatIcon,
-                    value: '156',
-                    label: 'ANSWERS PROVIDED',
+                    value: '$contributions',
+                    label: 'CONTRIBUTIONS',
                   ),
                 ),
               ],
@@ -551,11 +656,11 @@ class _ReputationCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'PROGRESS TO LEVEL 9',
+                'PROGRESS TO LEVEL ${level + 1}',
                 style: palette.progressLabelStyle,
               ),
               Text(
-                '75%',
+                '${(progress * 100).round()}%',
                 style: palette.progressPercentStyle,
               ),
             ],
@@ -572,7 +677,7 @@ class _ReputationCard extends StatelessWidget {
                     child: const SizedBox.expand(),
                   ),
                   FractionallySizedBox(
-                    widthFactor: 0.75,
+                    widthFactor: progress,
                     child: ColoredBox(
                       color: AppTheme.primary,
                       child: const SizedBox.expand(),
@@ -585,6 +690,17 @@ class _ReputationCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static String _formatNumber(int n) {
+    final s = n.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      final fromEnd = s.length - i;
+      buf.write(s[i]);
+      if (fromEnd > 1 && (fromEnd - 1) % 3 == 0) buf.write(',');
+    }
+    return buf.toString();
   }
 }
 

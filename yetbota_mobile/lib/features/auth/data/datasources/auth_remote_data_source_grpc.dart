@@ -134,6 +134,47 @@ class GrpcAuthRemoteDataSource implements AuthRemoteDataSource {
     }
   }
 
+  @override
+  Future<Result<bool>> checkMobile({required String mobile}) async {
+    try {
+      final resp =
+          await _userClient.checkMobile(CheckMobileRequest(mobile: mobile));
+      if (!resp.success || resp.code != _successCode) {
+        return Err(_envelopeFailure(resp.code, resp.message));
+      }
+      return Ok(resp.data);
+    } on GrpcError catch (e) {
+      return Err(_grpcToFailure(e));
+    } catch (e) {
+      return Err(NetworkFailure('Failed to check mobile: $e'));
+    }
+  }
+
+  @override
+  Future<Result<void>> newPassword({
+    required String mobile,
+    required String password,
+    required String random,
+  }) async {
+    try {
+      final resp = await _authClient.newPassword(
+        NewPasswordRequest(
+          password: password,
+          random: random,
+          mobile: mobile,
+        ),
+      );
+      if (!resp.success || resp.code != _successCode) {
+        return Err(_envelopeFailure(resp.code, resp.message));
+      }
+      return const Ok(null);
+    } on GrpcError catch (e) {
+      return Err(_grpcToFailure(e));
+    } catch (e) {
+      return Err(NetworkFailure('Failed to set new password: $e'));
+    }
+  }
+
   AuthSession _sessionFromTokenData(TokenData data, {String? username}) {
     final now = DateTime.now();
     return AuthSession(

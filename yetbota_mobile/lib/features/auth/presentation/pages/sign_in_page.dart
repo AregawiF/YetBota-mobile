@@ -4,10 +4,12 @@ import 'package:yetbota_mobile/app/theme/app_theme.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_state.dart';
+import 'package:yetbota_mobile/features/auth/presentation/pages/forgot_password_phone_page.dart';
 import 'package:yetbota_mobile/features/auth/presentation/pages/sign_in_phone_page.dart';
 
 class SignInPage extends StatefulWidget {
-  const SignInPage({super.key});
+  const SignInPage({super.key, this.afterPasswordReset = false});
+  final bool afterPasswordReset;
 
   @override
   State<SignInPage> createState() => _SignInPageState();
@@ -19,6 +21,21 @@ class _SignInPageState extends State<SignInPage> {
   bool _obscure = true;
   String? _usernameError;
   String? _passwordError;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.afterPasswordReset) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password updated. Please sign in.'),
+          ),
+        );
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -135,7 +152,14 @@ class _SignInPageState extends State<SignInPage> {
                                 ),
                               ),
                               TextButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ForgotPasswordPhonePage(),
+                                    ),
+                                  );
+                                },
                                 child: const Text(
                                   'Forgot Password?',
                                   style: TextStyle(

@@ -1,0 +1,443 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yetbota_mobile/app/theme/app_theme.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/forgot_password_bloc.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/forgot_password_event.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/forgot_password_state.dart';
+import 'package:yetbota_mobile/features/auth/presentation/pages/forgot_password_new_password_page.dart';
+
+class ForgotPasswordOtpPage extends StatefulWidget {
+  const ForgotPasswordOtpPage({super.key, required this.phoneE164});
+
+  final String phoneE164;
+
+  @override
+  State<ForgotPasswordOtpPage> createState() => _ForgotPasswordOtpPageState();
+}
+
+class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
+  final _controllers = List.generate(6, (_) => TextEditingController());
+  final _nodes = List.generate(6, (_) => FocusNode());
+  Timer? _timer;
+  int _secondsRemaining = 55;
+  String? _localError;
+  bool _navigatedToReset = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (_secondsRemaining <= 0) return;
+      setState(() => _secondsRemaining -= 1);
+    });
+    _nodes.first.requestFocus();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final n in _nodes) {
+      n.dispose();
+    }
+    super.dispose();
+  }
+
+  String get _code => _controllers.map((c) => c.text).join();
+
+  void _resend() {
+    if (_secondsRemaining > 0) return;
+    setState(() {
+      _secondsRemaining = 55;
+      _localError = null;
+      for (final c in _controllers) {
+        c.clear();
+      }
+    });
+    _nodes.first.requestFocus();
+    context
+        .read<ForgotPasswordBloc>()
+        .add(const ForgotPasswordOtpResendRequested());
+  }
+
+  void _verify() {
+    final code = _code;
+    if (code.length != 6 || code.contains(RegExp(r'[^0-9]'))) {
+      setState(() => _localError = 'Enter the 6-digit code');
+      return;
+    }
+    setState(() => _localError = null);
+    context.read<ForgotPasswordBloc>().add(ForgotPasswordOtpSubmitted(code));
+  }
+
+  void _onStateChanged(BuildContext context, ForgotPasswordState state) {
+    if (state.step == ForgotPasswordStep.newPassword && !_navigatedToReset) {
+      _navigatedToReset = true;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const ForgotPasswordNewPasswordPage(),
+        ),
+      ).then((_) {
+        if (mounted) _navigatedToReset = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final phoneMasked = _mask(widget.phoneE164);
+
+    return BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
+      listener: _onStateChanged,
+      builder: (context, state) {
+        final remoteError = state.errorMessage;
+        final isVerifying = state.verifyingOtp;
+
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                _Header(
+                  title: 'Verify OTP',
+                  onBack: () => Navigator.of(context).maybePop(),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Container(
+                            height: 80,
+                            width: 80,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withOpacity(0.10),
+                              borderRadius: BorderRadius.circular(26),
+                            ),
+                            child: const Icon(
+                              Icons.sms,
+                              color: AppTheme.primary,
+                              size: 38,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Check your phone',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.6,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "We've sent a 6-digit code to $phoneMasked",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 26),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final maxWidth = constraints.maxWidth;
+                            const gap = 8.0;
+                            const groupGap = 10.0;
+                            const dotWidth = 6.0;
+
+                            final availableForBoxes =
+                                maxWidth - (gap * 4) - (groupGap * 2) - dotWidth;
+                            final boxSize =
+                                (availableForBoxes / 6).clamp(36.0, 48.0);
+
+                            return Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  for (int i = 0; i < 3; i++) ...[
+                                    _OtpBox(
+                                      size: boxSize,
+                                      controller: _controllers[i],
+                                      node: _nodes[i],
+                                      onChanged: (v) => _onChanged(i, v),
+                                      onBackspaceAtEmpty: () => _onBackspace(i),
+                                    ),
+                                    if (i != 2) const SizedBox(width: gap),
+                                  ],
+                                  const SizedBox(width: groupGap),
+                                  const _OtpDot(),
+                                  const SizedBox(width: groupGap),
+                                  for (int i = 3; i < 6; i++) ...[
+                                    _OtpBox(
+                                      size: boxSize,
+                                      controller: _controllers[i],
+                                      node: _nodes[i],
+                                      onChanged: (v) => _onChanged(i, v),
+                                      onBackspaceAtEmpty: () => _onBackspace(i),
+                                    ),
+                                    if (i != 5) const SizedBox(width: gap),
+                                  ],
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        if (_localError != null || remoteError != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _localError ?? remoteError ?? '',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 22),
+                        Center(
+                          child: TextButton(
+                            onPressed: _secondsRemaining > 0 ? null : _resend,
+                            child: Text.rich(
+                              TextSpan(
+                                text: "Didn't get it? ",
+                                style: const TextStyle(
+                                  color: Color(0xFF9CA3AF),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: _secondsRemaining > 0
+                                        ? 'Resend in ${_secondsRemaining}s'
+                                        : 'Resend',
+                                    style: const TextStyle(
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        SizedBox(
+                          height: 56,
+                          width: double.infinity,
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.surface,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            onPressed: isVerifying ? null : _verify,
+                            child: isVerifying
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.4,
+                                      color: Colors.black,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Verify & Continue',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _onChanged(int index, String value) {
+    final v = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (v.isEmpty) return;
+    if (v.length > 1) {
+      _controllers[index].text = v.substring(v.length - 1);
+      _controllers[index].selection = const TextSelection.collapsed(offset: 1);
+    }
+    setState(() => _localError = null);
+    if (index < _nodes.length - 1) {
+      _nodes[index + 1].requestFocus();
+    } else {
+      FocusScope.of(context).unfocus();
+    }
+  }
+
+  void _onBackspace(int index) {
+    if (index == 0) return;
+    _controllers[index - 1].clear();
+    _nodes[index - 1].requestFocus();
+  }
+
+  static String _mask(String phone) {
+    final digits = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (digits.length <= 5) return digits;
+    final end = digits.substring(digits.length - 2);
+    return '${digits.substring(0, 2)} ••• ••• $end';
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.title,
+    required this.onBack,
+  });
+
+  final String title;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Row(
+        children: [
+          SizedBox(
+            height: 40,
+            width: 40,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: cs.onSurface.withOpacity(0.10),
+                foregroundColor: cs.onSurface,
+                shape: const CircleBorder(),
+              ),
+              onPressed: onBack,
+              child: const Icon(Icons.arrow_back_ios_new, size: 20),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: cs.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 40),
+        ],
+      ),
+    );
+  }
+}
+
+class _OtpBox extends StatelessWidget {
+  const _OtpBox({
+    required this.size,
+    required this.controller,
+    required this.node,
+    required this.onChanged,
+    required this.onBackspaceAtEmpty,
+  });
+
+  final double size;
+  final TextEditingController controller;
+  final FocusNode node;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onBackspaceAtEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return SizedBox(
+      height: size,
+      width: size,
+      child: KeyboardListener(
+        focusNode: FocusNode(skipTraversal: true),
+        onKeyEvent: (event) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.backspace) {
+            if (controller.text.isEmpty) onBackspaceAtEmpty();
+          }
+        },
+        child: TextField(
+          controller: controller,
+          focusNode: node,
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          maxLength: 1,
+          style: TextStyle(
+            color: cs.onSurface,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          decoration: InputDecoration(
+            counterText: '',
+            filled: true,
+            fillColor: dark ? const Color(0xFF121212) : cs.surface,
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: dark ? const Color(0xFF333333) : cs.outlineVariant,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            contentPadding: EdgeInsets.symmetric(vertical: (size - 24) / 2),
+          ),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}
+
+class _OtpDot extends StatelessWidget {
+  const _OtpDot();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      height: 52,
+      width: 6,
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Color(0xFF333333),
+            shape: BoxShape.circle,
+          ),
+          child: SizedBox(height: 6, width: 6),
+        ),
+      ),
+    );
+  }
+}

@@ -32,4 +32,13 @@ abstract interface class AuthRemoteDataSource {
     required String password,
     required String random,
   });
+
+  /// Check if the mobile number is already registered.
+  Future<Result<bool>> checkMobile({required String mobile});
+
+  Future<Result<void>> newPassword({
+    required String mobile,
+    required String password,
+    required String random,
+  });
 }

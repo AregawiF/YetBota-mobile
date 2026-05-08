@@ -31,4 +31,13 @@ abstract interface class AuthRepository {
     required String password,
     required String random,
   });
+
+  /// Returns `true` when the mobile number is already registered.
+  Future<Result<bool>> isMobileRegistered({required String mobile});
+
+  Future<Result<void>> resetPassword({
+    required String mobile,
+    required String password,
+    required String random,
+  });
 }

@@ -4,37 +4,38 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/core/types/result.dart';
 import 'package:yetbota_mobile/features/auth/domain/usecases/check_mobile.dart';
 import 'package:yetbota_mobile/features/auth/domain/usecases/generate_mobile_otp.dart';
-import 'package:yetbota_mobile/features/auth/domain/usecases/register.dart';
+import 'package:yetbota_mobile/features/auth/domain/usecases/reset_password.dart';
 import 'package:yetbota_mobile/features/auth/domain/usecases/validate_mobile_otp.dart';
-import 'package:yetbota_mobile/features/auth/presentation/bloc/register_event.dart';
-import 'package:yetbota_mobile/features/auth/presentation/bloc/register_state.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/forgot_password_event.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/forgot_password_state.dart';
 
-class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
-  RegisterBloc({
+class ForgotPasswordBloc
+    extends Bloc<ForgotPasswordEvent, ForgotPasswordState> {
+  ForgotPasswordBloc({
     required CheckMobile checkMobile,
     required GenerateMobileOtp generateOtp,
     required ValidateMobileOtp validateOtp,
-    required Register register,
+    required ResetPassword resetPassword,
   })  : _checkMobile = checkMobile,
         _generateOtp = generateOtp,
         _validateOtp = validateOtp,
-        _register = register,
-        super(const RegisterState()) {
-    on<RegisterMobileSubmitted>(_onMobileSubmitted);
-    on<RegisterOtpResendRequested>(_onOtpResend);
-    on<RegisterOtpSubmitted>(_onOtpSubmitted);
-    on<RegisterDetailsSubmitted>(_onDetailsSubmitted);
-    on<RegisterReset>((_, emit) => emit(const RegisterState()));
+        _resetPassword = resetPassword,
+        super(const ForgotPasswordState()) {
+    on<ForgotPasswordReset>((_, emit) => emit(const ForgotPasswordState()));
+    on<ForgotPasswordMobileSubmitted>(_onMobileSubmitted);
+    on<ForgotPasswordOtpResendRequested>(_onOtpResend);
+    on<ForgotPasswordOtpSubmitted>(_onOtpSubmitted);
+    on<ForgotPasswordNewPasswordSubmitted>(_onNewPasswordSubmitted);
   }
 
   final CheckMobile _checkMobile;
   final GenerateMobileOtp _generateOtp;
   final ValidateMobileOtp _validateOtp;
-  final Register _register;
+  final ResetPassword _resetPassword;
 
   Future<void> _onMobileSubmitted(
-    RegisterMobileSubmitted event,
-    Emitter<RegisterState> emit,
+    ForgotPasswordMobileSubmitted event,
+    Emitter<ForgotPasswordState> emit,
   ) async {
     final random = _newRandom();
     emit(state.copyWith(
@@ -47,11 +48,11 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     final checkResult = await _checkMobile(mobile: event.mobile);
     switch (checkResult) {
       case Ok(value: final isRegistered):
-        if (isRegistered) {
+        if (!isRegistered) {
           emit(state.copyWith(
             requestingOtp: false,
             errorMessage:
-                'This phone number is already registered. Please sign in instead.',
+                'No account found for this phone number. Please sign up.',
           ));
           return;
         }
@@ -70,7 +71,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
           mobile: event.mobile,
           random: random,
           otpInfo: info,
-          step: RegisterStep.otp,
+          step: ForgotPasswordStep.otp,
           requestingOtp: false,
           clearError: true,
         ));
@@ -83,8 +84,8 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   }
 
   Future<void> _onOtpResend(
-    RegisterOtpResendRequested event,
-    Emitter<RegisterState> emit,
+    ForgotPasswordOtpResendRequested event,
+    Emitter<ForgotPasswordState> emit,
   ) async {
     final mobile = state.mobile;
     final random = state.random;
@@ -105,18 +106,17 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   }
 
   Future<void> _onOtpSubmitted(
-    RegisterOtpSubmitted event,
-    Emitter<RegisterState> emit,
+    ForgotPasswordOtpSubmitted event,
+    Emitter<ForgotPasswordState> emit,
   ) async {
     final mobile = state.mobile;
     final random = state.random;
     if (mobile == null || random == null) {
       emit(state.copyWith(
-        errorMessage: 'Please enter your phone number first.',
+        errorMessage: 'Please re-enter your phone number.',
       ));
       return;
     }
-
     emit(state.copyWith(verifyingOtp: true, clearError: true));
 
     final result = await _validateOtp(
@@ -128,7 +128,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       case Ok(value: final info):
         emit(state.copyWith(
           otpInfo: info,
-          step: RegisterStep.details,
+          step: ForgotPasswordStep.newPassword,
           verifyingOtp: false,
           clearError: true,
         ));
@@ -140,40 +140,35 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     }
   }
 
-  Future<void> _onDetailsSubmitted(
-    RegisterDetailsSubmitted event,
-    Emitter<RegisterState> emit,
+  Future<void> _onNewPasswordSubmitted(
+    ForgotPasswordNewPasswordSubmitted event,
+    Emitter<ForgotPasswordState> emit,
   ) async {
     final mobile = state.mobile;
     final random = state.random;
     if (mobile == null || random == null) {
       emit(state.copyWith(
-        errorMessage: 'Session expired. Please restart sign up.',
+        errorMessage: 'Session expired. Please restart password reset.',
       ));
       return;
     }
+    emit(state.copyWith(submittingPassword: true, clearError: true));
 
-    emit(state.copyWith(registering: true, clearError: true));
-
-    final result = await _register(
-      firstName: event.firstName,
-      lastName: event.lastName,
-      username: event.username,
+    final result = await _resetPassword(
       mobile: mobile,
       password: event.password,
       random: random,
     );
     switch (result) {
-      case Ok(value: final session):
+      case Ok():
         emit(state.copyWith(
-          session: session,
-          step: RegisterStep.done,
-          registering: false,
+          step: ForgotPasswordStep.done,
+          submittingPassword: false,
           clearError: true,
         ));
       case Err(failure: final failure):
         emit(state.copyWith(
-          registering: false,
+          submittingPassword: false,
           errorMessage: failure.message,
         ));
     }
@@ -183,8 +178,6 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
 
   static String _newRandom() {
     final bytes = List<int>.generate(16, (_) => _rng.nextInt(256));
-    return bytes
-        .map((b) => b.toRadixString(16).padLeft(2, '0'))
-        .join();
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 }

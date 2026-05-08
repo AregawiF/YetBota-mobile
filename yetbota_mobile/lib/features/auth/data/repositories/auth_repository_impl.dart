@@ -105,4 +105,22 @@ class AuthRepositoryImpl implements AuthRepository {
         return signIn(username: username, password: password);
     }
   }
+
+  @override
+  Future<Result<bool>> isMobileRegistered({required String mobile}) {
+    return _remote.checkMobile(mobile: mobile);
+  }
+
+  @override
+  Future<Result<void>> resetPassword({
+    required String mobile,
+    required String password,
+    required String random,
+  }) {
+    return _remote.newPassword(
+      mobile: mobile,
+      password: password,
+      random: random,
+    );
+  }
 }
