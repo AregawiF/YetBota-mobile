@@ -13,6 +13,11 @@ class BottomNav extends StatelessWidget {
     return navTopInset + navBodyHeight + MediaQuery.paddingOf(context).bottom;
   }
 
+  /// Bottom inset of the nav bar content (safe area + 2), same as [BottomNav]’s inner padding.
+  static double navBottomPadding(BuildContext context) {
+    return MediaQuery.paddingOf(context).bottom + 2;
+  }
+
   static const double fabSize = 56.0;
   static const double navBodyHeight = 64.0;
 
@@ -63,7 +68,9 @@ class BottomNav extends StatelessWidget {
                     color: navBackground,
                     border: Border(top: BorderSide(color: navBorder)),
                   ),
-                  padding: EdgeInsets.only(bottom: bottomInset + 2),
+                  padding: EdgeInsets.only(
+                    bottom: BottomNav.navBottomPadding(context),
+                  ),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 448),

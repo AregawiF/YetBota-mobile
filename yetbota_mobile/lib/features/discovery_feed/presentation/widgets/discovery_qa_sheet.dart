@@ -433,6 +433,7 @@ class _AskQuestionBarState extends State<_AskQuestionBar> {
                               showTopSnackBar(
                                 context,
                                 'Question will post when the feed is live.',
+                                appearance: AppSnackBarAppearance.neutral,
                               );
                               _controller.clear();
                             },

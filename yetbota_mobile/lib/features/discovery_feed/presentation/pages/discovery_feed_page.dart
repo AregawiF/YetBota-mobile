@@ -343,7 +343,11 @@ class _DiscoveryFeedPageState extends State<DiscoveryFeedPage> {
           onTap: () {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!context.mounted) return;
-              showTopSnackBar(context, 'Share coming soon.');
+              showTopSnackBar(
+                context,
+                'Share coming soon.',
+                appearance: AppSnackBarAppearance.neutral,
+              );
             });
           },
           child: Row(

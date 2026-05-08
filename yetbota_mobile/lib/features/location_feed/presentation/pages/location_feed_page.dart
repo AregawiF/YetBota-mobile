@@ -96,83 +96,80 @@ class LocationFeedPage extends StatelessWidget {
     final palette = _LocationFeedPalette.of(context);
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        const gapAboveScreenEdge = 80.0;
         final destructive = Theme.of(sheetContext).colorScheme.error;
         final destructiveOutline = destructive.withValues(alpha: 0.4);
-        return Padding(
-          padding: const EdgeInsets.only(bottom: gapAboveScreenEdge),
-          child: Material(
-            color: palette.sheetBackground,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            clipBehavior: Clip.antiAlias,
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 10),
-                  Container(
-                    height: 4,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: palette.dragHandle,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+        return Material(
+          color: palette.sheetBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          clipBehavior: Clip.antiAlias,
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  height: 4,
+                  width: 40,
+                  decoration: BoxDecoration(
+                    color: palette.dragHandle,
+                    borderRadius: BorderRadius.circular(999),
                   ),
-                  const SizedBox(height: 14),
-                  _ThemeTile(
-                    title: 'Light',
-                    icon: Icons.wb_sunny_outlined,
-                    selected: mode == ThemeMode.light,
-                    onTap: () {
-                      context.read<ThemeCubit>().setMode(ThemeMode.light);
-                      Navigator.of(sheetContext).pop();
-                    },
-                  ),
-                  _ThemeTile(
-                    title: 'Dark',
-                    icon: Icons.nightlight_round,
-                    selected: mode == ThemeMode.dark,
-                    onTap: () {
-                      context.read<ThemeCubit>().setMode(ThemeMode.dark);
-                      Navigator.of(sheetContext).pop();
-                    },
-                  ),
-                  _ThemeTile(
-                    title: 'System',
-                    icon: Icons.settings_suggest_outlined,
-                    selected: mode == ThemeMode.system,
-                    onTap: () {
-                      context.read<ThemeCubit>().setMode(ThemeMode.system);
-                      Navigator.of(sheetContext).pop();
-                    },
-                  ),
-                  Divider(height: 1, color: palette.borderSoft),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: destructive,
-                          side: BorderSide(color: destructiveOutline),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        icon: const Icon(Icons.logout_rounded),
-                        label: const Text('Sign out'),
-                        onPressed: () {
-                          Navigator.of(sheetContext).pop();
-                          context.read<AuthBloc>().add(
-                            const AuthSignOutRequested(),
-                          );
-                        },
+                ),
+                const SizedBox(height: 14),
+                _ThemeTile(
+                  title: 'Light',
+                  icon: Icons.wb_sunny_outlined,
+                  selected: mode == ThemeMode.light,
+                  onTap: () {
+                    context.read<ThemeCubit>().setMode(ThemeMode.light);
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+                _ThemeTile(
+                  title: 'Dark',
+                  icon: Icons.nightlight_round,
+                  selected: mode == ThemeMode.dark,
+                  onTap: () {
+                    context.read<ThemeCubit>().setMode(ThemeMode.dark);
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+                _ThemeTile(
+                  title: 'System',
+                  icon: Icons.settings_suggest_outlined,
+                  selected: mode == ThemeMode.system,
+                  onTap: () {
+                    context.read<ThemeCubit>().setMode(ThemeMode.system);
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+                Divider(height: 1, color: palette.borderSoft),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: destructive,
+                        side: BorderSide(color: destructiveOutline),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
+                      icon: const Icon(Icons.logout_rounded),
+                      label: const Text('Sign out'),
+                      onPressed: () {
+                        Navigator.of(sheetContext).pop();
+                        context.read<AuthBloc>().add(
+                              const AuthSignOutRequested(),
+                            );
+                      },
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );

@@ -1,5 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:grpc/grpc.dart';
 import 'package:yetbota_mobile/core/errors/failure.dart';
+import 'package:yetbota_mobile/core/grpc/generated/identity/v1/user.pb.dart'
+    as pb;
 import 'package:yetbota_mobile/core/grpc/generated/identity/v1/user.pbgrpc.dart';
 import 'package:yetbota_mobile/core/grpc/grpc_invoker.dart';
 import 'package:yetbota_mobile/core/types/result.dart';
@@ -34,29 +38,108 @@ class GrpcProfileRemoteDataSource implements ProfileRemoteDataSource {
       final profileUrl = data.hasProfileUrl()
           ? data.profileUrl
           : (user.hasProfileUrl() ? user.profileUrl : '');
-      return Ok(
-        UserProfile(
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          username: user.username,
-          mobile: user.mobile,
-          rating: user.rating,
-          contributions: user.contributions,
-          followers: user.followers,
-          following: user.following,
-          status: user.status,
-          role: user.role.name,
-          profileUrl: profileUrl,
-          createdAt: user.hasCreatedAt() ? user.createdAt.toDateTime() : null,
-          updatedAt: user.hasUpdatedAt() ? user.updatedAt.toDateTime() : null,
-        ),
-      );
+      return Ok(_mapPrivateUser(user, profileUrlFromEnvelope: profileUrl));
     } on GrpcError catch (e) {
       return Err(_grpcToFailure(e));
     } catch (e) {
       return Err(NetworkFailure('Failed to load profile: $e'));
     }
+  }
+
+  @override
+  Future<Result<UserProfile>> updateSelf({
+    required String firstName,
+    required String lastName,
+    required String username,
+  }) async {
+    try {
+      final resp = await _invoker.run(
+        () => _userClient.updateSelf(
+          UpdateSelfRequest(
+            firstName: firstName,
+            lastName: lastName,
+            username: username,
+          ),
+        ),
+      );
+      if (!resp.success || resp.code != _successCode) {
+        return Err(_envelopeFailure(resp.code, resp.message));
+      }
+      final user = resp.data;
+      final profileUrl = user.hasProfileUrl() ? user.profileUrl : '';
+      return Ok(_mapPrivateUser(user, profileUrlFromEnvelope: profileUrl));
+    } on GrpcError catch (e) {
+      return Err(_grpcToFailure(e));
+    } catch (e) {
+      return Err(NetworkFailure('Failed to update profile: $e'));
+    }
+  }
+
+  @override
+  Future<Result<String>> uploadProfilePhoto(Uint8List imageBytes) async {
+    try {
+      final resp = await _invoker.run(
+        () => _userClient.uploadProfile(
+          UploadProfileRequest(image: imageBytes),
+        ),
+      );
+      if (!resp.success || resp.code != _successCode) {
+        return Err(_envelopeFailure(resp.code, resp.message));
+      }
+      final url = resp.data.trim();
+      if (url.isEmpty) {
+        return Err(
+          ServerFailure('Upload succeeded but no image URL was returned'),
+        );
+      }
+      return Ok(url);
+    } on GrpcError catch (e) {
+      return Err(_grpcToFailure(e));
+    } catch (e) {
+      return Err(NetworkFailure('Failed to upload photo: $e'));
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteSelf() async {
+    try {
+      final resp = await _invoker.run(
+        () => _userClient.deleteSelf(DeleteSelfRequest()),
+      );
+      if (!resp.success || resp.code != _successCode) {
+        return Err(_envelopeFailure(resp.code, resp.message));
+      }
+      return const Ok(null);
+    } on GrpcError catch (e) {
+      return Err(_grpcToFailure(e));
+    } catch (e) {
+      return Err(NetworkFailure('Failed to delete account: $e'));
+    }
+  }
+
+  UserProfile _mapPrivateUser(
+    pb.PrivateUser user, {
+    required String profileUrlFromEnvelope,
+  }) {
+    final profileUrl = profileUrlFromEnvelope.isNotEmpty
+        ? profileUrlFromEnvelope
+        : (user.hasProfileUrl() ? user.profileUrl : '');
+    return UserProfile(
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      mobile: user.mobile,
+      rating: user.rating,
+      contributions: user.contributions,
+      followers: user.followers,
+      following: user.following,
+      status: user.status,
+      role: user.role.name,
+      profileUrl: profileUrl,
+      createdAt: user.hasCreatedAt() ? user.createdAt.toDateTime() : null,
+      updatedAt: user.hasUpdatedAt() ? user.updatedAt.toDateTime() : null,
+    );
   }
 
   Failure _envelopeFailure(String code, String message) {

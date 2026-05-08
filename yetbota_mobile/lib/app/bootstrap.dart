@@ -27,7 +27,10 @@ import 'package:yetbota_mobile/features/profile/data/datasources/profile_remote_
 import 'package:yetbota_mobile/features/profile/data/datasources/profile_remote_data_source_grpc.dart';
 import 'package:yetbota_mobile/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:yetbota_mobile/features/profile/domain/repositories/profile_repository.dart';
+import 'package:yetbota_mobile/features/profile/domain/usecases/delete_self_profile.dart';
 import 'package:yetbota_mobile/features/profile/domain/usecases/read_self_profile.dart';
+import 'package:yetbota_mobile/features/profile/domain/usecases/update_self_profile.dart';
+import 'package:yetbota_mobile/features/profile/domain/usecases/upload_profile_photo.dart';
 import 'package:yetbota_mobile/features/profile/presentation/cubit/profile_cubit.dart';
 
 Future<Widget> bootstrap({AppConfig? config}) async {
@@ -44,6 +47,7 @@ Future<Widget> bootstrap({AppConfig? config}) async {
   final AuthRemoteDataSource remote = GrpcAuthRemoteDataSource(
     authClient: grpcFactory.authClient,
     userClient: grpcFactory.userClient,
+    grpcInvoker: grpcFactory.invoker,
   );
 
   final AuthRepository authRepository = AuthRepositoryImpl(
@@ -68,6 +72,9 @@ Future<Widget> bootstrap({AppConfig? config}) async {
     remote: profileRemote,
   );
   final readSelfProfile = ReadSelfProfile(profileRepository);
+  final updateSelfProfile = UpdateSelfProfile(profileRepository);
+  final uploadProfilePhoto = UploadProfilePhoto(profileRepository);
+  final deleteSelfProfile = DeleteSelfProfile(profileRepository);
 
   final prefs = await SharedPreferences.getInstance();
   final themeCubit = ThemeCubit(prefs);
@@ -109,6 +116,9 @@ Future<Widget> bootstrap({AppConfig? config}) async {
         BlocProvider(
           create: (_) => ProfileCubit(
             readSelfProfile: readSelfProfile,
+            updateSelfProfile: updateSelfProfile,
+            uploadProfilePhoto: uploadProfilePhoto,
+            deleteSelfProfile: deleteSelfProfile,
             tokenStore: tokenStore,
           ),
         ),

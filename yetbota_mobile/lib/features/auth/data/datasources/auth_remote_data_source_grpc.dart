@@ -2,6 +2,7 @@ import 'package:grpc/grpc.dart';
 import 'package:yetbota_mobile/core/errors/failure.dart';
 import 'package:yetbota_mobile/core/grpc/generated/identity/v1/auth.pbgrpc.dart';
 import 'package:yetbota_mobile/core/grpc/generated/identity/v1/user.pbgrpc.dart';
+import 'package:yetbota_mobile/core/grpc/grpc_invoker.dart';
 import 'package:yetbota_mobile/core/types/result.dart';
 import 'package:yetbota_mobile/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:yetbota_mobile/features/auth/domain/entities/auth_session.dart';
@@ -11,11 +12,14 @@ class GrpcAuthRemoteDataSource implements AuthRemoteDataSource {
   GrpcAuthRemoteDataSource({
     required AuthServiceClient authClient,
     required UserServiceClient userClient,
+    required GrpcInvoker grpcInvoker,
   })  : _authClient = authClient,
-        _userClient = userClient;
+        _userClient = userClient,
+        _grpcInvoker = grpcInvoker;
 
   final AuthServiceClient _authClient;
   final UserServiceClient _userClient;
+  final GrpcInvoker _grpcInvoker;
 
   static const _successCode = '00';
 
@@ -172,6 +176,31 @@ class GrpcAuthRemoteDataSource implements AuthRemoteDataSource {
       return Err(_grpcToFailure(e));
     } catch (e) {
       return Err(NetworkFailure('Failed to set new password: $e'));
+    }
+  }
+
+  @override
+  Future<Result<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final resp = await _grpcInvoker.run(
+        () => _authClient.changePassword(
+          ChangePasswordRequest(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+          ),
+        ),
+      );
+      if (!resp.success || resp.code != _successCode) {
+        return Err(_envelopeFailure(resp.code, resp.message));
+      }
+      return const Ok(null);
+    } on GrpcError catch (e) {
+      return Err(_grpcToFailure(e));
+    } catch (e) {
+      return Err(NetworkFailure('Failed to change password: $e'));
     }
   }
 
