@@ -1,35 +1,101 @@
-import 'package:flutter/material.dart';
-import 'package:yetbota_mobile/app/theme/app_theme.dart';
+import 'dart:async';
 
-/// Short SnackBar below the status bar so it is not covered by the main shell bottom nav.
+import 'package:flutter/material.dart';
+import 'package:yetbota_mobile/common/ui/widgets/bottom_nav.dart';
+
+enum AppSnackBarAppearance {
+  accent,
+  error,
+  neutral,
+}
+
+OverlayEntry? _activeSnackBarEntry;
+Timer? _activeSnackBarTimer;
+
+void _dismissActiveSnackBar() {
+  _activeSnackBarTimer?.cancel();
+  _activeSnackBarTimer = null;
+  _activeSnackBarEntry?.remove();
+  _activeSnackBarEntry = null;
+}
+
 void showTopSnackBar(
   BuildContext context,
   String message, {
   Duration? duration,
+  AppSnackBarAppearance appearance = AppSnackBarAppearance.accent,
 }) {
-  final m = MediaQuery.of(context);
-  final h = m.size.height;
-  final t = m.viewPadding.top + 60.0;
-  const kSnackBarHeight = 56.0;
-  final bottom = (h - t - kSnackBarHeight).clamp(0.0, h);
-  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final navigator = Navigator.maybeOf(context, rootNavigator: true);
+  final overlay = navigator?.overlay;
+  if (overlay == null || !context.mounted) return;
 
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.removeCurrentSnackBar();
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(
-        message,
-        style: TextStyle(
-          color: isDark ? AppTheme.primary : Colors.black,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
+  final scheme = Theme.of(context).colorScheme;
+
+  late final Color backgroundColor;
+  late final Color foregroundColor;
+
+  switch (appearance) {
+    case AppSnackBarAppearance.accent:
+      backgroundColor = scheme.primary;
+      foregroundColor = scheme.onPrimary;
+    case AppSnackBarAppearance.error:
+      backgroundColor = scheme.errorContainer;
+      foregroundColor = scheme.onErrorContainer;
+    case AppSnackBarAppearance.neutral:
+      backgroundColor = scheme.surfaceContainerHighest;
+      foregroundColor = scheme.onSurface;
+  }
+
+  _dismissActiveSnackBar();
+
+  final showDuration = duration ?? const Duration(seconds: 3);
+
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (overlayContext) {
+      return Positioned.fill(
+        child: IgnorePointer(
+          ignoring: true,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: BottomNav.navBottomPadding(overlayContext),
+              ),
+              child: SizedBox(
+                width: MediaQuery.sizeOf(overlayContext).width,
+                child: Material(
+                  elevation: 8,
+                  color: backgroundColor,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 20,
+                    ),
+                    child: DefaultTextStyle.merge(
+                      style: TextStyle(
+                        color: foregroundColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        height: 1.25,
+                      ),
+                      child: Text(message),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
-      ),
-      backgroundColor: isDark ? const Color(0xFF1A1A1A) : AppTheme.primary,
-      behavior: SnackBarBehavior.floating,
-      margin: EdgeInsets.fromLTRB(16, t, 16, bottom),
-      duration: duration ?? const Duration(seconds: 3),
-    ),
+      );
+    },
   );
+
+  _activeSnackBarEntry = entry;
+  overlay.insert(entry);
+
+  _activeSnackBarTimer = Timer(showDuration, () {
+    if (_activeSnackBarEntry != entry) return;
+    _dismissActiveSnackBar();
+  });
 }

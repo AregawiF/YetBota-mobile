@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
+import 'package:yetbota_mobile/common/ui/app_snack_bar.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_event.dart';
 import 'package:yetbota_mobile/features/auth/presentation/bloc/auth_state.dart';
@@ -28,11 +29,7 @@ class _SignInPageState extends State<SignInPage> {
     if (widget.afterPasswordReset) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password updated. Please sign in.'),
-          ),
-        );
+        showTopSnackBar(context, 'Password updated. Please sign in.');
       });
     }
   }

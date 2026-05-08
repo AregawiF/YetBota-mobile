@@ -63,6 +63,7 @@ class _CreateLocationPostPageState extends State<CreateLocationPostPage> {
                           context,
                           'Image upload will connect to gallery next.',
                           duration: const Duration(milliseconds: 1200),
+                          appearance: AppSnackBarAppearance.neutral,
                         );
                       },
                       cameraUrl: _kCameraArt,
@@ -93,6 +94,7 @@ class _CreateLocationPostPageState extends State<CreateLocationPostPage> {
                           context,
                           'Location picker coming soon.',
                           duration: const Duration(milliseconds: 1200),
+                          appearance: AppSnackBarAppearance.neutral,
                         );
                       },
                     ),
@@ -131,6 +133,7 @@ class _CreateLocationPostPageState extends State<CreateLocationPostPage> {
                           context,
                           'Custom tag: connect next.',
                           duration: const Duration(milliseconds: 1200),
+                          appearance: AppSnackBarAppearance.neutral,
                         );
                       },
                     ),
@@ -150,6 +153,7 @@ class _CreateLocationPostPageState extends State<CreateLocationPostPage> {
         context,
         'Add a title for your post.',
         duration: const Duration(milliseconds: 1100),
+        appearance: AppSnackBarAppearance.error,
       );
       return;
     }

@@ -123,4 +123,15 @@ class AuthRepositoryImpl implements AuthRepository {
       random: random,
     );
   }
+
+  @override
+  Future<Result<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _remote.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
 }

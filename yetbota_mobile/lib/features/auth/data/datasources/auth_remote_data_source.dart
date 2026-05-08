@@ -41,4 +41,9 @@ abstract interface class AuthRemoteDataSource {
     required String password,
     required String random,
   });
+
+  Future<Result<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 }

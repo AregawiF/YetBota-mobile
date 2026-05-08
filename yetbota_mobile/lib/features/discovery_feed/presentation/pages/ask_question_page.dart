@@ -98,6 +98,7 @@ class _AskQuestionPageState extends State<AskQuestionPage> {
         context,
         'Write your question first.',
         duration: const Duration(milliseconds: 1100),
+        appearance: AppSnackBarAppearance.error,
       );
       return;
     }
