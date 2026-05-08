@@ -24,6 +24,9 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+# Protobuf / gRPC codegen (regenerate: run `cd yetbota/common && make gendart-all` in the terminal to regenerate the generated files)
+lib/core/grpc/generated/
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id

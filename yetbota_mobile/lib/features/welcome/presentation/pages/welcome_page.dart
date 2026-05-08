@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
 import 'package:yetbota_mobile/features/auth/presentation/pages/sign_in_page.dart';
-import 'package:yetbota_mobile/features/auth/presentation/pages/sign_up_page.dart';
+import 'package:yetbota_mobile/features/auth/presentation/pages/sign_in_phone_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -223,7 +223,9 @@ class _BottomCard extends StatelessWidget {
                     ),
                     onPressed: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const SignUpPage()),
+                        MaterialPageRoute(
+                          builder: (_) => const SignInPhonePage(),
+                        ),
                       );
                     },
                     child: const Text(

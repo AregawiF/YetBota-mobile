@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yetbota_mobile/app/theme/app_theme.dart';
-import 'package:yetbota_mobile/features/auth/presentation/bloc/register_bloc.dart';
-import 'package:yetbota_mobile/features/auth/presentation/bloc/register_event.dart';
-import 'package:yetbota_mobile/features/auth/presentation/bloc/register_state.dart';
-import 'package:yetbota_mobile/features/auth/presentation/pages/otp_verification_page.dart';
-import 'package:yetbota_mobile/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/forgot_password_bloc.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/forgot_password_event.dart';
+import 'package:yetbota_mobile/features/auth/presentation/bloc/forgot_password_state.dart';
+import 'package:yetbota_mobile/features/auth/presentation/pages/forgot_password_otp_page.dart';
 
-class SignInPhonePage extends StatefulWidget {
-  const SignInPhonePage({super.key});
+class ForgotPasswordPhonePage extends StatefulWidget {
+  const ForgotPasswordPhonePage({super.key});
 
   @override
-  State<SignInPhonePage> createState() => _SignInPhonePageState();
+  State<ForgotPasswordPhonePage> createState() =>
+      _ForgotPasswordPhonePageState();
 }
 
-class _SignInPhonePageState extends State<SignInPhonePage> {
+class _ForgotPasswordPhonePageState extends State<ForgotPasswordPhonePage> {
   final _phoneController = TextEditingController();
   String? _phoneError;
   bool _navigatedToOtp = false;
@@ -22,7 +22,7 @@ class _SignInPhonePageState extends State<SignInPhonePage> {
   @override
   void initState() {
     super.initState();
-    context.read<RegisterBloc>().add(const RegisterReset());
+    context.read<ForgotPasswordBloc>().add(const ForgotPasswordReset());
   }
 
   @override
@@ -46,15 +46,18 @@ class _SignInPhonePageState extends State<SignInPhonePage> {
     if (error != null) return;
 
     final mobileE164 = '+251$digits';
-    context.read<RegisterBloc>().add(RegisterMobileSubmitted(mobileE164));
+    context
+        .read<ForgotPasswordBloc>()
+        .add(ForgotPasswordMobileSubmitted(mobileE164));
   }
 
-  void _onStateChanged(BuildContext context, RegisterState state) {
-    if (state.step == RegisterStep.otp && !_navigatedToOtp) {
+  void _onStateChanged(BuildContext context, ForgotPasswordState state) {
+    if (state.step == ForgotPasswordStep.otp && !_navigatedToOtp) {
       _navigatedToOtp = true;
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => OtpVerificationPage(phoneE164: state.mobile ?? ''),
+          builder: (_) =>
+              ForgotPasswordOtpPage(phoneE164: state.mobile ?? ''),
         ),
       ).then((_) {
         if (mounted) _navigatedToOtp = false;
@@ -67,7 +70,7 @@ class _SignInPhonePageState extends State<SignInPhonePage> {
     final cs = Theme.of(context).colorScheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
 
-    return BlocConsumer<RegisterBloc, RegisterState>(
+    return BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
       listener: _onStateChanged,
       builder: (context, state) {
         final remoteError = state.errorMessage;
@@ -77,7 +80,7 @@ class _SignInPhonePageState extends State<SignInPhonePage> {
             child: Column(
               children: [
                 _TopBar(
-                  title: 'Sign Up',
+                  title: 'Forgot Password',
                   onBack: () => Navigator.of(context).maybePop(),
                 ),
                 Expanded(
@@ -86,36 +89,45 @@ class _SignInPhonePageState extends State<SignInPhonePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const SizedBox(height: 8),
                         Center(
-                          child: Image.asset(
-                            'assets/icons/discover_icon.png',
-                            width: 160,
-                            height: 160,
-                            fit: BoxFit.contain,
+                          child: Container(
+                            width: 96,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withOpacity(0.10),
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.lock_reset,
+                              size: 44,
+                              color: AppTheme.primary,
+                            ),
                           ),
                         ),
+                        const SizedBox(height: 24),
                         Text(
-                          'Yet Bota',
+                          'Reset your password',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: cs.onSurface,
-                            fontSize: 36,
+                            fontSize: 26,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: -1.0,
+                            letterSpacing: -0.6,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Text(
-                          'We\'ll text you a verification code to confirm your number.',
+                          "Enter the phone number tied to your account and we'll send a verification code.",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: cs.onSurface.withOpacity(dark ? 0.7 : 0.75),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            height: 1.35,
+                            fontSize: 15,
+                            height: 1.4,
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 32),
                         Padding(
                           padding: const EdgeInsets.only(left: 4, bottom: 12),
                           child: Text(
@@ -197,7 +209,14 @@ class _SignInPhonePageState extends State<SignInPhonePage> {
                         ),
                         if (_phoneError != null || remoteError != null) ...[
                           const SizedBox(height: 10),
-                          _FieldErrorText(text: _phoneError ?? remoteError ?? ''),
+                          Text(
+                            _phoneError ?? remoteError ?? '',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                         const SizedBox(height: 18),
                         SizedBox(
@@ -220,62 +239,14 @@ class _SignInPhonePageState extends State<SignInPhonePage> {
                                       color: Colors.black,
                                     ),
                                   )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Text(
-                                        'Send OTP',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Icon(Icons.chevron_right, size: 22),
-                                    ],
+                                : const Text(
+                                    'Send Code',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                           ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text.rich(
-                          TextSpan(
-                            text: 'By continuing, you agree to our ',
-                            style: TextStyle(
-                              color: cs.onSurface.withOpacity(0.55),
-                              fontSize: 12,
-                              height: 1.4,
-                            ),
-                            children: const [
-                              TextSpan(
-                                text: 'Terms of Service',
-                                style: TextStyle(
-                                  color: AppTheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              TextSpan(text: ' and '),
-                              TextSpan(
-                                text: 'Privacy Policy',
-                                style: TextStyle(
-                                  color: AppTheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 28),
-                        _BottomInline(
-                          text: 'Already have an account?',
-                          actionText: 'Sign In',
-                          onAction: () {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                builder: (_) => const SignInPage(),
-                              ),
-                            );
-                          },
                         ),
                       ],
                     ),
@@ -307,11 +278,7 @@ class _TopBar extends StatelessWidget {
             width: 48,
             child: IconButton(
               onPressed: onBack,
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: cs.onSurface,
-                size: 22,
-              ),
+              icon: Icon(Icons.arrow_back_ios_new, color: cs.onSurface, size: 20),
             ),
           ),
           Expanded(
@@ -328,61 +295,6 @@ class _TopBar extends StatelessWidget {
           ),
           const SizedBox(width: 48),
         ],
-      ),
-    );
-  }
-}
-
-class _BottomInline extends StatelessWidget {
-  const _BottomInline({
-    required this.text,
-    required this.actionText,
-    required this.onAction,
-  });
-
-  final String text;
-  final String actionText;
-  final VoidCallback onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Center(
-      child: TextButton(
-        onPressed: onAction,
-        child: Text.rich(
-          TextSpan(
-            text: '$text ',
-            style: TextStyle(color: cs.onSurface.withOpacity(0.7), fontSize: 16),
-            children: [
-              TextSpan(
-                text: actionText,
-                style: const TextStyle(
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FieldErrorText extends StatelessWidget {
-  const _FieldErrorText({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    if (text.isEmpty) return const SizedBox.shrink();
-    return Text(
-      text,
-      style: TextStyle(
-        color: Theme.of(context).colorScheme.error,
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
       ),
     );
   }

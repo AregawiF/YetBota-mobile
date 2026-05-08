@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yetbota_mobile/core/auth/token_store.dart';
 import 'package:yetbota_mobile/core/types/result.dart';
 import 'package:yetbota_mobile/features/auth/domain/usecases/get_session.dart';
 import 'package:yetbota_mobile/features/auth/domain/usecases/sign_in.dart';
@@ -11,18 +14,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required GetSession getSession,
     required SignIn signIn,
     required SignOut signOut,
+    required TokenStore tokenStore,
   })  : _getSession = getSession,
         _signIn = signIn,
         _signOut = signOut,
+        _tokenStore = tokenStore,
         super(const AuthUnknown()) {
     on<AuthStarted>(_onStarted);
     on<AuthSignInRequested>(_onSignInRequested);
     on<AuthSignOutRequested>(_onSignOutRequested);
+    on<AuthSessionEstablished>(_onSessionEstablished);
+    on<AuthSessionRevoked>(_onSessionRevoked);
+
+    _tokenStoreSub = _tokenStore.events.listen(_onTokenStoreEvent);
   }
 
   final GetSession _getSession;
   final SignIn _signIn;
   final SignOut _signOut;
+  final TokenStore _tokenStore;
+  late final StreamSubscription<TokenStoreEvent> _tokenStoreSub;
 
   Future<void> _onStarted(AuthStarted event, Emitter<AuthState> emit) async {
     final result = await _getSession();
@@ -31,7 +42,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         if (session == null) {
           emit(const AuthUnauthenticated());
         } else {
-          emit(AuthAuthenticated(token: session.token));
+          emit(AuthAuthenticated(
+            accessToken: session.accessToken,
+            username: session.username,
+          ));
         }
       case Err(failure: final failure):
         emit(AuthUnauthenticated(errorMessage: failure.message));
@@ -43,10 +57,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthAuthenticating());
-    final result = await _signIn(email: event.email, password: event.password);
+    final result = await _signIn(
+      username: event.username,
+      password: event.password,
+    );
     switch (result) {
       case Ok(value: final session):
-        emit(AuthAuthenticated(token: session.token));
+        emit(AuthAuthenticated(
+          accessToken: session.accessToken,
+          username: session.username,
+        ));
       case Err(failure: final failure):
         emit(AuthUnauthenticated(errorMessage: failure.message));
     }
@@ -64,5 +84,38 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthUnauthenticated(errorMessage: failure.message));
     }
   }
-}
 
+  void _onSessionEstablished(
+    AuthSessionEstablished event,
+    Emitter<AuthState> emit,
+  ) {
+    emit(AuthAuthenticated(
+      accessToken: event.session.accessToken,
+      username: event.session.username,
+    ));
+  }
+
+  void _onSessionRevoked(
+    AuthSessionRevoked event,
+    Emitter<AuthState> emit,
+  ) {
+    if (state is AuthAuthenticated || state is AuthAuthenticating) {
+      emit(AuthUnauthenticated(errorMessage: event.reason));
+    }
+  }
+
+  void _onTokenStoreEvent(TokenStoreEvent ev) {
+    if (ev is TokenSessionCleared &&
+        ev.reason == TokenClearReason.refreshFailed) {
+      add(const AuthSessionRevoked(
+        reason: 'Your session expired. Please sign in again.',
+      ));
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    await _tokenStoreSub.cancel();
+    return super.close();
+  }
+}

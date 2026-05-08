@@ -37,8 +37,9 @@ dependencies:
   flutter_bloc: ^9.1.1
   equatable: ^2.0.5
   flutter_secure_storage: ^9.2.2
-  grpc: ^4.0.4
-  protobuf: ^4.1.0
+  grpc: ^5.1.0
+  protobuf: ^6.0.0
+  fixnum: ^1.1.1
   shared_preferences: ^2.3.2
   google_fonts: ^6.3.2
   flutter_svg: ^2.2.1

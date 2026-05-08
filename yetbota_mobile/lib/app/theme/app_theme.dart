@@ -31,12 +31,38 @@ class AppTheme {
   static const lightBackground = Color(0xFFFFFFFF);
   static const darkBackground = Color(0xFF000000);
 
+  // --- Semantic UI (errors, warnings) — use Theme.colorScheme.error or
+  // Theme.extension<SemanticColors>() so destructive / validation / badges stay consistent.
+
+  /// Maps to [ColorScheme.error] / destructive actions (e.g. sign out).
+  static const Color error = Color(0xFFF87171);
+
+  /// Content on solid [error] surfaces (filled buttons, icons on error).
+  static const Color onError = Color(0xFF431418);
+
+  static const Color errorContainerLight = Color(0xFFFFE4E6);
+  static const Color onErrorContainerLight = Color(0xFF881337);
+
+  static const Color errorContainerDark = Color(0xFF7F1D1D);
+  static const Color onErrorContainerDark = Color(0xFFFECACA);
+
+  /// Primary warning accent — prefer [SemanticColors.warning] from the theme.
+  static const Color warning = Color(0xFFF59E0B);
+
+  static const Color onWarning = Color(0xFF422006);
+
   static ThemeData light() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: primary,
-      brightness: Brightness.light,
-      surface: lightBackground,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: primary,
+          brightness: Brightness.light,
+          surface: lightBackground,
+        ).copyWith(
+          error: error,
+          onError: onError,
+          errorContainer: errorContainerLight,
+          onErrorContainer: onErrorContainerLight,
+        );
 
     final theme = ThemeData(
       useMaterial3: true,
@@ -47,21 +73,32 @@ class AppTheme {
         foregroundColor: scheme.onSurface,
         surfaceTintColor: Colors.transparent,
       ),
-      inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
+      inputDecorationTheme: const InputDecorationTheme(
+        border: OutlineInputBorder(),
+      ),
     );
     final textTheme = GoogleFonts.plusJakartaSansTextTheme(theme.textTheme);
     return theme.copyWith(
       textTheme: textTheme,
-      primaryTextTheme: GoogleFonts.plusJakartaSansTextTheme(theme.primaryTextTheme),
+      primaryTextTheme: GoogleFonts.plusJakartaSansTextTheme(
+        theme.primaryTextTheme,
+      ),
+      extensions: const <ThemeExtension<dynamic>>[SemanticColors.light],
     );
   }
 
   static ThemeData dark() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: primary,
-      brightness: Brightness.dark,
-      surface: darkBackground,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: primary,
+          brightness: Brightness.dark,
+          surface: darkBackground,
+        ).copyWith(
+          error: error,
+          onError: Colors.white,
+          errorContainer: errorContainerDark,
+          onErrorContainer: onErrorContainerDark,
+        );
 
     final theme = ThemeData(
       useMaterial3: true,
@@ -72,13 +109,92 @@ class AppTheme {
         foregroundColor: scheme.onSurface,
         surfaceTintColor: Colors.transparent,
       ),
-      inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
+      inputDecorationTheme: const InputDecorationTheme(
+        border: OutlineInputBorder(),
+      ),
     );
     final textTheme = GoogleFonts.plusJakartaSansTextTheme(theme.textTheme);
     return theme.copyWith(
       textTheme: textTheme,
-      primaryTextTheme: GoogleFonts.plusJakartaSansTextTheme(theme.primaryTextTheme),
+      primaryTextTheme: GoogleFonts.plusJakartaSansTextTheme(
+        theme.primaryTextTheme,
+      ),
+      extensions: const <ThemeExtension<dynamic>>[SemanticColors.dark],
     );
   }
 }
 
+/// Warning and related accents not covered by [ColorScheme].
+@immutable
+class SemanticColors extends ThemeExtension<SemanticColors> {
+  const SemanticColors({
+    required this.warning,
+    required this.onWarning,
+    required this.warningContainer,
+    required this.onWarningContainer,
+  });
+
+  final Color warning;
+  final Color onWarning;
+  final Color warningContainer;
+  final Color onWarningContainer;
+
+  static const SemanticColors light = SemanticColors(
+    warning: AppTheme.warning,
+    onWarning: AppTheme.onWarning,
+    warningContainer: Color(0xFFFEF3C7),
+    onWarningContainer: Color(0xFF92400E),
+  );
+
+  static const SemanticColors dark = SemanticColors(
+    warning: Color(0xFFFBBF24),
+    onWarning: Color(0xFF1C1917),
+    warningContainer: Color(0xFF78350F),
+    onWarningContainer: Color(0xFFFEF3C7),
+  );
+
+  @override
+  SemanticColors copyWith({
+    Color? warning,
+    Color? onWarning,
+    Color? warningContainer,
+    Color? onWarningContainer,
+  }) {
+    return SemanticColors(
+      warning: warning ?? this.warning,
+      onWarning: onWarning ?? this.onWarning,
+      warningContainer: warningContainer ?? this.warningContainer,
+      onWarningContainer: onWarningContainer ?? this.onWarningContainer,
+    );
+  }
+
+  @override
+  SemanticColors lerp(ThemeExtension<SemanticColors>? other, double t) {
+    if (other is! SemanticColors) return this;
+    return SemanticColors(
+      warning: Color.lerp(warning, other.warning, t)!,
+      onWarning: Color.lerp(onWarning, other.onWarning, t)!,
+      warningContainer: Color.lerp(
+        warningContainer,
+        other.warningContainer,
+        t,
+      )!,
+      onWarningContainer: Color.lerp(
+        onWarningContainer,
+        other.onWarningContainer,
+        t,
+      )!,
+    );
+  }
+}
+
+extension SemanticColorsContext on BuildContext {
+  SemanticColors get semanticColors {
+    final ext = Theme.of(this).extension<SemanticColors>();
+    assert(
+      ext != null,
+      'SemanticColors extension missing — register it in AppTheme.light/dark.',
+    );
+    return ext!;
+  }
+}

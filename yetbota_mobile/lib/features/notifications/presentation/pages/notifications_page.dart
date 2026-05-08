@@ -58,53 +58,55 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   static const List<_Notif> _kAllItems = [
     _Notif(
-        day: _NotifDay.today,
-        kind: _NotifKind.social,
-        avatarUrl: _NotifAssets.avatarAlex,
-        titleSpans: _TitleSpans.socialLike(user: 'Alex_Green'),
-        meta: 'Social • 2m ago',
-        isUnread: true,
-      ),
-      _Notif(
-        day: _NotifDay.today,
-        kind: _NotifKind.qna,
-        avatarUrl: _NotifAssets.avatarSarah,
-        titleSpans: _TitleSpans.qnaReply(quoteLines: [
+      day: _NotifDay.today,
+      kind: _NotifKind.social,
+      avatarUrl: _NotifAssets.avatarAlex,
+      titleSpans: _TitleSpans.socialLike(user: 'Alex_Green'),
+      meta: 'Social • 2m ago',
+      isUnread: true,
+    ),
+    _Notif(
+      day: _NotifDay.today,
+      kind: _NotifKind.qna,
+      avatarUrl: _NotifAssets.avatarSarah,
+      titleSpans: _TitleSpans.qnaReply(
+        quoteLines: [
           '"I highly recommend the espresso at',
           'Oxfordshire Coffee House!"',
-        ]),
-        meta: 'Q&A • 1h ago',
-        isUnread: false,
+        ],
       ),
-      _Notif(
-        day: _NotifDay.today,
-        kind: _NotifKind.badge,
-        centerIconUrl: _NotifAssets.trophy,
-        useIconCircle: true,
-        iconBackground: Color(0x33F59E0B),
-        titleSpans: _TitleSpans.achievement(
-          subline: 'Thanks for providing 10 helpful answers this week!',
-        ),
-        meta: 'Achievements • 3h ago',
-        isUnread: false,
+      meta: 'Q&A • 1h ago',
+      isUnread: false,
+    ),
+    _Notif(
+      day: _NotifDay.today,
+      kind: _NotifKind.badge,
+      centerIconUrl: _NotifAssets.trophy,
+      useIconCircle: true,
+      iconBackground: Color(0x33F59E0B),
+      titleSpans: _TitleSpans.achievement(
+        subline: 'Thanks for providing 10 helpful answers this week!',
       ),
-      _Notif(
-        day: _NotifDay.yesterday,
-        kind: _NotifKind.social,
-        avatarUrl: _NotifAssets.avatarJordan,
-        titleSpans: _TitleSpans.socialLikeBike(user: 'Jordan_92'),
-        meta: 'Social • Yesterday',
-        isUnread: false,
-      ),
-      _Notif(
-        day: _NotifDay.yesterday,
-        kind: _NotifKind.community,
-        centerIconUrl: _NotifAssets.mapPin,
-        useIconCircle: true,
-        titleSpans: _TitleSpans.farmersMarket(),
-        meta: 'Community • Yesterday',
-        isUnread: false,
-      ),
+      meta: 'Achievements • 3h ago',
+      isUnread: false,
+    ),
+    _Notif(
+      day: _NotifDay.yesterday,
+      kind: _NotifKind.social,
+      avatarUrl: _NotifAssets.avatarJordan,
+      titleSpans: _TitleSpans.socialLikeBike(user: 'Jordan_92'),
+      meta: 'Social • Yesterday',
+      isUnread: false,
+    ),
+    _Notif(
+      day: _NotifDay.yesterday,
+      kind: _NotifKind.community,
+      centerIconUrl: _NotifAssets.mapPin,
+      useIconCircle: true,
+      titleSpans: _TitleSpans.farmersMarket(),
+      meta: 'Community • Yesterday',
+      isUnread: false,
+    ),
   ];
 
   List<_Notif> _visibleItems() {
@@ -202,7 +204,11 @@ class _Header extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: onBack,
-                  icon: Icon(Icons.chevron_left_rounded, size: 28, color: palette.onSurface),
+                  icon: Icon(
+                    Icons.chevron_left_rounded,
+                    size: 28,
+                    color: palette.onSurface,
+                  ),
                 ),
                 Text(
                   'Notifications',
@@ -226,7 +232,11 @@ class _Header extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.done_all_rounded, size: 16, color: palette.muted),
+                      Icon(
+                        Icons.done_all_rounded,
+                        size: 16,
+                        color: palette.muted,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Mark all as read',
@@ -379,25 +389,18 @@ class _NotificationRow extends StatelessWidget {
         onTap: onTap,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: palette.divider),
-            ),
+            border: Border(bottom: BorderSide(color: palette.divider)),
           ),
           child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (showUnreadChrome)
-                  Container(
-                    width: 4,
-                    color: AppTheme.primary,
-                  ),
+                  Container(width: 4, color: AppTheme.primary),
                 Expanded(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: showUnreadChrome
-                          ? AppTheme.primary500a0F
-                          : null,
+                      color: showUnreadChrome ? AppTheme.primary500a0F : null,
                     ),
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
@@ -411,7 +414,9 @@ class _NotificationRow extends StatelessWidget {
                         children: [
                           _AvatarBlock(n: n, palette: palette),
                           const SizedBox(width: 16),
-                          Expanded(child: _TextBlock(n: n, palette: palette)),
+                          Expanded(
+                            child: _TextBlock(n: n, palette: palette),
+                          ),
                           if (showUnreadChrome) ...[
                             const SizedBox(width: 8),
                             Padding(
@@ -469,7 +474,7 @@ class _AvatarBlock extends StatelessWidget {
                         ? Icons.emoji_events_rounded
                         : Icons.location_on_rounded,
                     color: n.kind == _NotifKind.badge
-                        ? const Color(0xFFF59E0B)
+                        ? context.semanticColors.warning
                         : AppTheme.primary,
                     size: 24,
                   ),
@@ -531,24 +536,22 @@ class _AvatarCornerIcon extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark
-                  ? const Color(0x40000000)
-                  : const Color(0x14000000),
+              color: isDark ? const Color(0x40000000) : const Color(0x14000000),
               blurRadius: 3,
               offset: const Offset(0, 1),
             ),
           ],
         ),
         child: social
-            ? const Icon(
+            ? Icon(
                 Icons.favorite_rounded,
                 size: 12,
-                color: Color(0xFFEF4444),
+                color: Theme.of(context).colorScheme.error,
               )
-            : const Icon(
+            : Icon(
                 Icons.chat_bubble_rounded,
                 size: 12,
-                color: Color(0xFF3B82F6),
+                color: Theme.of(context).colorScheme.primary,
               ),
       ),
     );
@@ -614,10 +617,7 @@ class _DefaultTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _RichFromSpans(
-      titleSpans: titleSpans,
-      palette: palette,
-    );
+    return _RichFromSpans(titleSpans: titleSpans, palette: palette);
   }
 }
 
@@ -682,13 +682,14 @@ class _AchievementRich extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final warningAccent = context.semanticColors.warning;
     return Text.rich(
       TextSpan(
         children: [
-          const TextSpan(
+          TextSpan(
             text: 'Achievement Unlocked! ',
             style: TextStyle(
-              color: Color(0xFFF59E0B),
+              color: warningAccent,
               fontSize: 14,
               fontWeight: FontWeight.w700,
               height: 19.25 / 14,
@@ -758,10 +759,7 @@ class _FarmersBody extends StatelessWidget {
 }
 
 class _RichFromSpans extends StatelessWidget {
-  const _RichFromSpans({
-    required this.titleSpans,
-    required this.palette,
-  });
+  const _RichFromSpans({required this.titleSpans, required this.palette});
 
   final _TitleSpans titleSpans;
   final _NotificationsPalette palette;
@@ -851,12 +849,7 @@ class _RichFromSpans extends StatelessWidget {
   }
 }
 
-enum _NotifFilter {
-  all,
-  social,
-  qna,
-  badges,
-}
+enum _NotifFilter { all, social, qna, badges }
 
 extension on _NotifFilter {
   String get label => switch (this) {
@@ -912,7 +905,12 @@ class _TitleSpans {
     : this._(alex: true, s1: user, s2: ' liked your post in ');
 
   const _TitleSpans.socialLikeBike({required String user})
-    : this._(bike: true, s1: user, s2: ' liked your post about the new ', s3: '.');
+    : this._(
+        bike: true,
+        s1: user,
+        s2: ' liked your post about the new ',
+        s3: '.',
+      );
 
   const _TitleSpans.qnaReply({required List<String> quoteLines})
     : this._(qnaLines: quoteLines);
@@ -936,11 +934,16 @@ class _TitleSpans {
 }
 
 class _NotifAssets {
-  static const avatarAlex = 'https://www.figma.com/api/mcp/asset/180df898-cea3-4d79-bf39-cb3a73addb48';
-  static const avatarSarah = 'https://www.figma.com/api/mcp/asset/ba641c15-12cf-4f2f-8449-9e8357373ee8';
-  static const avatarJordan = 'https://www.figma.com/api/mcp/asset/7dce075d-b76a-4980-82c6-2fbafbe55e02';
-  static const trophy = 'https://www.figma.com/api/mcp/asset/69150d67-470b-4221-96e7-347477421b20';
-  static const mapPin = 'https://www.figma.com/api/mcp/asset/236d04de-f80f-47d7-ba27-9b6e2ce57347';
+  static const avatarAlex =
+      'https://www.figma.com/api/mcp/asset/180df898-cea3-4d79-bf39-cb3a73addb48';
+  static const avatarSarah =
+      'https://www.figma.com/api/mcp/asset/ba641c15-12cf-4f2f-8449-9e8357373ee8';
+  static const avatarJordan =
+      'https://www.figma.com/api/mcp/asset/7dce075d-b76a-4980-82c6-2fbafbe55e02';
+  static const trophy =
+      'https://www.figma.com/api/mcp/asset/69150d67-470b-4221-96e7-347477421b20';
+  static const mapPin =
+      'https://www.figma.com/api/mcp/asset/236d04de-f80f-47d7-ba27-9b6e2ce57347';
 }
 
 class _NotificationsPalette {

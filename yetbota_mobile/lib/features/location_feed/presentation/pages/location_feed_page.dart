@@ -11,9 +11,7 @@ import 'package:yetbota_mobile/features/notifications/presentation/pages/notific
 import 'package:yetbota_mobile/features/show_on_map/presentation/show_on_map_overlay_page.dart';
 
 class LocationFeedPage extends StatelessWidget {
-  const LocationFeedPage({super.key, required this.token});
-
-  final String token;
+  const LocationFeedPage({super.key});
 
   static const _headerProfileImage =
       'https://www.figma.com/api/mcp/asset/9970d698-6dc8-4b66-9c79-17f3ccaadb45';
@@ -96,87 +94,86 @@ class LocationFeedPage extends StatelessWidget {
   void _showProfileMenu(BuildContext context) {
     final mode = context.read<ThemeCubit>().state;
     final palette = _LocationFeedPalette.of(context);
-    final shortToken = token.length <= 14
-        ? token
-        : '${token.substring(0, 14)}...';
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: palette.sheetBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                height: 4,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: palette.dragHandle,
-                  borderRadius: BorderRadius.circular(999),
-                ),
+        const gapAboveScreenEdge = 80.0;
+        final destructive = Theme.of(sheetContext).colorScheme.error;
+        final destructiveOutline = destructive.withValues(alpha: 0.4);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: gapAboveScreenEdge),
+          child: Material(
+            color: palette.sheetBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            clipBehavior: Clip.antiAlias,
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 10),
+                  Container(
+                    height: 4,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: palette.dragHandle,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _ThemeTile(
+                    title: 'Light',
+                    icon: Icons.wb_sunny_outlined,
+                    selected: mode == ThemeMode.light,
+                    onTap: () {
+                      context.read<ThemeCubit>().setMode(ThemeMode.light);
+                      Navigator.of(sheetContext).pop();
+                    },
+                  ),
+                  _ThemeTile(
+                    title: 'Dark',
+                    icon: Icons.nightlight_round,
+                    selected: mode == ThemeMode.dark,
+                    onTap: () {
+                      context.read<ThemeCubit>().setMode(ThemeMode.dark);
+                      Navigator.of(sheetContext).pop();
+                    },
+                  ),
+                  _ThemeTile(
+                    title: 'System',
+                    icon: Icons.settings_suggest_outlined,
+                    selected: mode == ThemeMode.system,
+                    onTap: () {
+                      context.read<ThemeCubit>().setMode(ThemeMode.system);
+                      Navigator.of(sheetContext).pop();
+                    },
+                  ),
+                  Divider(height: 1, color: palette.borderSoft),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: destructive,
+                          side: BorderSide(color: destructiveOutline),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('Sign out'),
+                        onPressed: () {
+                          Navigator.of(sheetContext).pop();
+                          context.read<AuthBloc>().add(
+                            const AuthSignOutRequested(),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
-              ListTile(
-                title: Text(
-                  'Signed-in token',
-                  style: TextStyle(color: palette.primaryText),
-                ),
-                subtitle: Text(
-                  shortToken,
-                  style: TextStyle(color: palette.mutedText),
-                ),
-                leading: const Icon(
-                  Icons.key_outlined,
-                  color: AppTheme.primary,
-                ),
-              ),
-              _ThemeTile(
-                title: 'Light',
-                icon: Icons.wb_sunny_outlined,
-                selected: mode == ThemeMode.light,
-                onTap: () {
-                  context.read<ThemeCubit>().setMode(ThemeMode.light);
-                  Navigator.of(sheetContext).pop();
-                },
-              ),
-              _ThemeTile(
-                title: 'Dark',
-                icon: Icons.nightlight_round,
-                selected: mode == ThemeMode.dark,
-                onTap: () {
-                  context.read<ThemeCubit>().setMode(ThemeMode.dark);
-                  Navigator.of(sheetContext).pop();
-                },
-              ),
-              _ThemeTile(
-                title: 'System',
-                icon: Icons.settings_suggest_outlined,
-                selected: mode == ThemeMode.system,
-                onTap: () {
-                  context.read<ThemeCubit>().setMode(ThemeMode.system);
-                  Navigator.of(sheetContext).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.logout_rounded,
-                  color: Color(0xFFF87171),
-                ),
-                title: Text(
-                  'Sign out',
-                  style: TextStyle(color: palette.primaryText),
-                ),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  context.read<AuthBloc>().add(const AuthSignOutRequested());
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         );
       },
